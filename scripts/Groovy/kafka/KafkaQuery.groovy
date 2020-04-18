@@ -30,10 +30,10 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 Logger logger = Logger.getLogger('KafkaQuery.log')
 
-def cli = new CliBuilder(usage: 'groovy InterimKafkaConsumer.groovy [options]', width: 100)
-cli.b(longOpt: 'bootstrap-server', args: 1, argName: 'bootstrap-server', 'Comma separated list of kafka brokers')
+def cli = new CliBuilder(usage: 'groovy KafkaQuery.groovy [options]', width: 100)
+cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers', 'Comma separated list of kafka brokers')
 cli.g(longOpt: 'group', args: 1, argName: 'group', 'Consumer group id')
-cli.o(longOpt: 'output', args: 1, argName: 'output', 'Output file to write matched records to')
+cli.f(longOpt: 'file', args: 1, argName: 'file', 'Output file to write matched records to')
 cli.t(longOpt: 'topic', args: 1, argName: 'topic', 'Kafka topic to consume the records from')
 cli.k(longOpt: 'keys', args: 1, argName: 'keys', 'Comma separated list of keys to match')
 cli.p(longOpt: 'property', args: 1, argName: 'property', 'Json path property to query for')
@@ -42,6 +42,8 @@ cli.r(longOpt: 'registry', args: 1, argName: 'registry', 'Schema registry URL')
 cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
         'File containing config for connecting to kafka, most commonly SSL settings')
 cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', 'Poll timeout, in milliseconds')
+cli.s(longOpt: 'start-time', args: 1, argName: 'start-time', 'Start time from which to look for messages')
+cli.e(longOpt: 'end-time', args: 1, argName: 'end-time', 'End time upto which to look for messages')
 cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the message format is avro')
 
 def options = cli.parse(args)
@@ -68,14 +70,16 @@ if(options.c) {
 
 // Initialize output file if required
 @Field File outputFile = null
-if(options.o) {
-    outputFile = new File(options.o)
+if(options.f) {
+    outputFile = new File(options.f)
 }
 
 final def ids = options.k ? options.k.split('[,]') as List : false
 final String propertyJsonPath = options.p
 final String propertyValue = options.v
-final long startTime = System.currentTimeMillis()
+final long processStartTime = System.currentTimeMillis()
+final long endTime = options.e ? Long.parseLong(options.e) : processStartTime
+final long startTime = options.s ? Long.parseLong(options.s) : 0
 final int giveUp = 10
 final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 1000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
@@ -92,7 +96,7 @@ consumers.each { consumer ->
         int noRecordsCount = 0
         long currentMessageTimestamp = 0
 
-        while (noRecordsCount < giveUp && currentMessageTimestamp < startTime) {
+        while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime) {
             ConsumerRecords consumerRecords = consumer.poll(pollDuration)
 
             if (consumerRecords.count() == 0) {
@@ -104,13 +108,14 @@ consumers.each { consumer ->
                 consumerRecords.each { record ->
                     consumedCount.incrementAndGet()
 
-                    if(ids) {
-                        if(ids.contains(record.key)) {
+                    if(record.timestamp() >= startTime) {
+                        if (ids) {
+                            if (ids.contains(record.key)) {
+                                writeOutput(record)
+                            }
+                        } else if (JsonPath.read(record.value.toString(), propertyJsonPath) == propertyValue) {
                             writeOutput(record)
                         }
-                    }
-                    else if (JsonPath.read(record.value.toString(), propertyJsonPath) == propertyValue) {
-                        writeOutput(record)
                     }
                     currentMessageTimestamp = record.timestamp()
                 }
@@ -122,7 +127,7 @@ consumers.each { consumer ->
 
 // Wait for all consumers to exit
 threads.each { it.join() }
-logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - startTime)/1000} seconds"
+logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime)/1000} seconds"
 
 
 /**
