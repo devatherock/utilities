@@ -10,3 +10,6 @@
 - KafkaQuery - Ability to get kafka messages between a specific start time and end time
 - KafkaPublisher - Publishes the content of input file as a single message or publishes each line from the file, which
 should be valid JSON, as a message
+
+### 2020-04-26
+- [Issue 3](https://github.com/devatherock/utilities/issues/3): Added ability to produce avro kafka messages
