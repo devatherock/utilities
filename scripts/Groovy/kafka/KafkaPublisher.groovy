@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory
 import ch.qos.logback.classic.Level
 
 import java.util.logging.Logger
+import java.util.concurrent.Future
 
 LoggerFactory.getLogger('root').setLevel(Level.INFO)
 System.setProperty('java.util.logging.SimpleFormatter.format',
@@ -59,6 +60,9 @@ if (isAvro && !options.s) {
     System.exit(1)
 }
 
+@Field List<Future> requests = []
+@Field Producer<String, String> producer
+
 Properties props = new Properties()
 !options.b ?: props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.b)
 props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.name)
@@ -78,7 +82,7 @@ if (options.c) {
     }
 }
 
-Producer<String, String> producer = new KafkaProducer<>(props)
+producer = new KafkaProducer<>(props)
 
 int count = 0
 String topic = options.t
@@ -87,7 +91,7 @@ String inputFileName = options.f
 
 if (options.multiple) {
     new File(inputFileName).each { request ->
-        producer.send(new ProducerRecord<String, String>(topic, JsonPath.read(request, key), request))
+        sendMessage(new ProducerRecord<String, String>(topic, JsonPath.read(request, key), request))
         count++
     }
 } else {
@@ -102,7 +106,7 @@ if (options.multiple) {
         producerRecord = new ProducerRecord<String, String>(topic, key, request)
     }
 
-    producer.send(producerRecord)
+    sendMessage(producerRecord)
     count++
 }
 
@@ -120,4 +124,18 @@ GenericRecord convertObjectToGenericRecord(String input, Schema schema) {
     Decoder decoder = DecoderFactory.get().jsonDecoder(schema, input)
     DatumReader<GenericData.Record> reader = new GenericDatumReader<>(schema)
     return reader.read(null, decoder)
+}
+
+/**
+ * Produces a message to kafka
+ *
+ * @param producerRecord
+ */
+void sendMessage(def producerRecord) {
+    requests.add(producer.send(producerRecord))
+
+    if (requests.size() == 500) {
+        requests.each { it.get() }
+        requests.clear()
+    }
 }

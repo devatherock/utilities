@@ -1,8 +1,8 @@
 @GrabResolver(root = 'http://packages.confluent.io/maven/', name = 'Confluent')
-@Grab(group='org.apache.kafka', module='kafka-clients', version='2.2.1-cp1')
-@Grab(group='ch.qos.logback', module='logback-classic', version='1.2.3')
-@Grab(group='io.confluent', module='kafka-avro-serializer', version='5.2.2')
-@Grab(group='com.jayway.jsonpath', module='json-path', version='2.4.0')
+@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.2.1-cp1')
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
+@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
+@Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
 
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -22,6 +22,8 @@ import groovy.transform.Field
 
 import java.time.temporal.ChronoUnit
 import java.time.Duration
+import java.util.concurrent.LinkedBlockingQueue
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 
@@ -52,6 +54,40 @@ if (!(options.t && (options.k || (options.p && options.v)) && (options.c || (opt
     System.exit(1)
 }
 
+// Write kafka messages to output in a single thread
+@Field LinkedBlockingQueue kafkaMessageQueue = new LinkedBlockingQueue(1000)
+@Field File outputFile = null
+if (options.f) {
+    outputFile = new File(options.f)
+}
+
+boolean isRunning = true
+Thread messageWriteThread = Thread.start {
+    def messagesToWrite = []
+
+    while (isRunning || kafkaMessageQueue.size() > 0) {
+        kafkaMessageQueue.drainTo(messagesToWrite)
+
+        // In case the queue is empty, add a wait time to reduce CPU usage
+        if (!messagesToWrite) {
+            def message = kafkaMessageQueue.poll(1000, TimeUnit.MILLISECONDS)
+            if (message) {
+                messagesToWrite.add(message)
+            }
+        }
+
+        messagesToWrite.each { kafkaMessage ->
+            if (outputFile) {
+                outputFile << "${kafkaMessage}${System.properties['line.separator']}"
+            } else {
+                println kafkaMessage
+            }
+        }
+        messagesToWrite.clear()
+    }
+}
+
+
 Properties props = new Properties()
 !options.b ?: props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, options.b)
 !options.g ?: props.put(ConsumerConfig.GROUP_ID_CONFIG, options.g)
@@ -59,19 +95,13 @@ props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class
 props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, 'earliest')
 !options.r ?: props.put(KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG, options.r)
 options.avro ? props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, KafkaAvroDeserializer.class.getName()) :
-    props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName())
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName())
 
 // Use configuration from file if specified
-if(options.c) {
+if (options.c) {
     new File(options.c).withInputStream { stream ->
         props.load(stream)
     }
-}
-
-// Initialize output file if required
-@Field File outputFile = null
-if(options.f) {
-    outputFile = new File(options.f)
 }
 
 final def ids = options.k ? options.k.split('[,]') as List : false
@@ -102,13 +132,12 @@ consumers.each { consumer ->
             if (consumerRecords.count() == 0) {
                 logger.fine('No records found')
                 noRecordsCount++
-            }
-            else {
+            } else {
                 noRecordsCount = 0 // Reset each time we find records
                 consumerRecords.each { record ->
                     consumedCount.incrementAndGet()
 
-                    if(record.timestamp() >= startTime) {
+                    if (record.timestamp() >= startTime) {
                         if (ids) {
                             if (ids.contains(record.key)) {
                                 writeOutput(record)
@@ -127,7 +156,9 @@ consumers.each { consumer ->
 
 // Wait for all consumers to exit
 threads.each { it.join() }
-logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime)/1000} seconds"
+isRunning = false
+messageWriteThread.join()
+logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime) / 1000} seconds"
 
 
 /**
@@ -140,13 +171,13 @@ logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, T
 List<KafkaConsumer> createConsumers(String topicName, Properties config) {
     // Initialize the consumers
     KafkaConsumer consumer = new KafkaConsumer(config)
-    List consumers = [ consumer ]
+    List consumers = [consumer]
 
     // Create one consumer per partition for the rest of the consumers
     List<PartitionInfo> partitions = consumer.partitionsFor(topicName)
     initializeConsumer(consumer, partitions.last())
 
-    for(int index = 0; index < partitions.size() - 1; index++) {
+    for (int index = 0; index < partitions.size() - 1; index++) {
         consumer = new KafkaConsumer(config)
         consumers.add(consumer)
         initializeConsumer(consumer, partitions[index])
@@ -162,7 +193,7 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
  * @param partitionInfo
  */
 void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
-    List<TopicPartition> assignment = [ new TopicPartition(partitionInfo.topic(), partitionInfo.partition()) ]
+    List<TopicPartition> assignment = [new TopicPartition(partitionInfo.topic(), partitionInfo.partition())]
     consumer.assign(assignment)
     consumer.seekToBeginning(assignment)
 }
@@ -174,12 +205,5 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
  */
 def writeOutput(ConsumerRecord record) {
     matchedCount++
-
-    if(outputFile) {
-        outputFile << record.value
-        outputFile << System.properties['line.separator']
-    }
-    else {
-        println record.value
-    }
+    kafkaMessageQueue.put(record.value)
 }
