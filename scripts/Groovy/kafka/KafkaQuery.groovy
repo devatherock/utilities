@@ -106,14 +106,14 @@ if (options.c) {
 
 final def ids = options.k ? options.k.split('[,]') as List : false
 final String propertyJsonPath = options.p
-final String propertyValue = options.v
+final def propertyValues = options.v ? options.v.split('[,]') as List : null
 final long processStartTime = System.currentTimeMillis()
 final long endTime = options.e ? Long.parseLong(options.e) : processStartTime
 final long startTime = options.s ? Long.parseLong(options.s) : 0
 final int giveUp = 10
 final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 1000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
-@Field int matchedCount = 0
+@Field AtomicInteger matchedCount = new AtomicInteger(0)
 AtomicInteger consumedCount = new AtomicInteger(0)
 
 // Initialize the consumers
@@ -142,7 +142,7 @@ consumers.each { consumer ->
                             if (ids.contains(record.key)) {
                                 writeOutput(record)
                             }
-                        } else if (JsonPath.read(record.value.toString(), propertyJsonPath) == propertyValue) {
+                        } else if (propertyValues.contains(JsonPath.read(record.value.toString(), propertyJsonPath))) {
                             writeOutput(record)
                         }
                     }
@@ -204,6 +204,6 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
  * @param record
  */
 def writeOutput(ConsumerRecord record) {
-    matchedCount++
+    matchedCount.incrementAndGet()
     kafkaMessageQueue.put(record.value)
 }

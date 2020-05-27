@@ -1,5 +1,9 @@
 # Changelog
 
+### 2020-05-27
+### Added
+- KafkaQuery - Ability to match against multiple values for a JSON path variable
+
 ### 2020-05-20
 ### Added
 - KafkaPublisher - Throttling to not produce messages too fast so as to not run out of memory
