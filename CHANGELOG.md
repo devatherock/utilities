@@ -1,10 +1,10 @@
 # Changelog
 
-### 2020-05-27
+## 2020-05-27
 ### Added
 - KafkaQuery - Ability to match against multiple values for a JSON path variable
 
-### 2020-05-20
+## 2020-05-20
 ### Added
 - KafkaPublisher - Throttling to not produce messages too fast so as to not run out of memory
 
@@ -12,20 +12,20 @@
 - [Issue 4](https://github.com/devatherock/utilities/issues/4): Wrote consumed messages to file in a single thread to 
 prevent messages from getting mixed up
 
-### 2020-04-26
+## 2020-04-26
 ### Added
 - [Issue 3](https://github.com/devatherock/utilities/issues/3): Ability to produce avro kafka messages
 
-### 2020-04-18
+## 2020-04-18
 ### Added
 - KafkaQuery - Ability to get kafka messages between a specific start time and end time
 - KafkaPublisher - Publishes the content of input file as a single message or publishes each line from the file, which
 should be valid JSON, as a message
 
-### 2020-03-06
+## 2020-03-06
 ### Added
 - Script to generate an access token for Google APIs
 
-### 2020-03-01
+## 2020-03-01
 ### Added
 - Script to look for a kafka message by key or by the value of a field in case of JSON/AVRO messages
