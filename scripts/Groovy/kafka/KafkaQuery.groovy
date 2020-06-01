@@ -30,7 +30,7 @@ import java.util.logging.Logger
 LoggerFactory.getLogger('root').setLevel(Level.INFO)
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
-Logger logger = Logger.getLogger('KafkaQuery.log')
+@Field Logger logger = Logger.getLogger('KafkaQuery.log')
 
 def cli = new CliBuilder(usage: 'groovy KafkaQuery.groovy [options]', width: 100)
 cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers', 'Comma separated list of kafka brokers')
@@ -46,12 +46,20 @@ cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
 cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', 'Poll timeout, in milliseconds')
 cli.s(longOpt: 'start-time', args: 1, argName: 'start-time', 'Start time from which to look for messages')
 cli.e(longOpt: 'end-time', args: 1, argName: 'end-time', 'End time upto which to look for messages')
+cli.l(longOpt: 'limit', args: 1, argName: 'limit', 'Maximum of messages to consume, to check for a match')
 cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the message format is avro')
+cli._(longOpt: 'debug', args: 0, argName: 'debug', 'Enables debug logs')
 
 def options = cli.parse(args)
 if (!(options.t && (options.k || (options.p && options.v)) && (options.c || (options.b && options.g)))) {
     cli.usage()
     System.exit(1)
+}
+
+if (options.debug) {
+    Logger root = Logger.getLogger('')
+    root.setLevel(java.util.logging.Level.FINE)
+    root.getHandlers().each { it.setLevel(java.util.logging.Level.FINE) }
 }
 
 // Write kafka messages to output in a single thread
@@ -111,12 +119,14 @@ final long processStartTime = System.currentTimeMillis()
 final long endTime = options.e ? Long.parseLong(options.e) : processStartTime
 final long startTime = options.s ? Long.parseLong(options.s) : 0
 final int giveUp = 10
-final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 1000
+final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 5000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
 @Field AtomicInteger matchedCount = new AtomicInteger(0)
 AtomicInteger consumedCount = new AtomicInteger(0)
 
 // Initialize the consumers
+@Field int maxMessagesToConsume
+maxMessagesToConsume = options.l ? Integer.parseInt(options.l) : 0
 List consumers = createConsumers(options.t, props)
 
 // Execute each consumer in its own thread
@@ -195,7 +205,17 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
 void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
     List<TopicPartition> assignment = [new TopicPartition(partitionInfo.topic(), partitionInfo.partition())]
     consumer.assign(assignment)
-    consumer.seekToBeginning(assignment)
+
+    if (maxMessagesToConsume > 0) {
+        Map<TopicPartition, Long> endOffsets = consumer.endOffsets(assignment)
+
+        endOffsets.each { key, value ->
+            logger.fine("Seeking ${key} to ${value - maxMessagesToConsume}")
+            consumer.seek(key, value - maxMessagesToConsume)
+        }
+    } else {
+        consumer.seekToBeginning(assignment)
+    }
 }
 
 /**
