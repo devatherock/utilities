@@ -1,5 +1,13 @@
 # Changelog
 
+### 2020-06-01
+### Added
+- `--debug` flag to view debug logs
+- `--limit` parameters to specify maximum number of messages to consume, starting from the last
+
+### Changed
+- Default value of poll timeout to `5000` milliseconds from `1000`, to account for slow networks
+
 ### 2020-05-27
 ### Added
 - KafkaQuery - Ability to match against multiple values for a JSON path variable
