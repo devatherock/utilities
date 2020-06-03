@@ -1,5 +1,5 @@
 @GrabResolver(root = 'http://packages.confluent.io/maven/', name = 'Confluent')
-@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.2.1-cp1')
+@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
@@ -127,7 +127,9 @@ AtomicInteger consumedCount = new AtomicInteger(0)
 // Initialize the consumers
 @Field int maxMessagesToConsume
 maxMessagesToConsume = options.l ? Integer.parseInt(options.l) : 0
+@Field Map endOffsetsMap = [:]
 List consumers = createConsumers(options.t, props)
+logger.fine({ "End offsets: ${endOffsetsMap}".toString() })
 
 // Execute each consumer in its own thread
 List<Thread> threads = []
@@ -135,8 +137,10 @@ consumers.each { consumer ->
     threads.add(Thread.start {
         int noRecordsCount = 0
         long currentMessageTimestamp = 0
+        ConsumerRecord currentRecord
 
-        while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime) {
+        while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime && (!currentRecord ||
+                (currentRecord.offset() + 1) < endOffsetsMap[currentRecord.partition()])) {
             ConsumerRecords consumerRecords = consumer.poll(pollDuration)
 
             if (consumerRecords.count() == 0) {
@@ -145,6 +149,9 @@ consumers.each { consumer ->
             } else {
                 noRecordsCount = 0 // Reset each time we find records
                 consumerRecords.each { record ->
+                    currentRecord = record
+                    logger.fine(
+                            { "Current record: ${currentRecord.partition()}:${currentRecord.offset()}".toString() })
                     consumedCount.incrementAndGet()
 
                     if (record.timestamp() >= startTime) {
@@ -206,13 +213,16 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
     List<TopicPartition> assignment = [new TopicPartition(partitionInfo.topic(), partitionInfo.partition())]
     consumer.assign(assignment)
 
-    if (maxMessagesToConsume > 0) {
-        Map<TopicPartition, Long> endOffsets = consumer.endOffsets(assignment)
+    Map<TopicPartition, Long> endOffsets = consumer.endOffsets(assignment)
+    def endOffsetEntry = endOffsets.entrySet().first()
+    endOffsetsMap[endOffsetEntry.key.partition()] = endOffsetEntry.value
 
-        endOffsets.each { key, value ->
-            logger.fine("Seeking ${key} to ${value - maxMessagesToConsume}")
-            consumer.seek(key, value - maxMessagesToConsume)
-        }
+    if (maxMessagesToConsume > 0) {
+        logger.fine(
+                {
+                    "Seeking partition ${endOffsetEntry.key.partition()} to ${endOffsetEntry.value - maxMessagesToConsume}".toString()
+                })
+        consumer.seek(endOffsetEntry.key, endOffsetEntry.value - maxMessagesToConsume)
     } else {
         consumer.seekToBeginning(assignment)
     }

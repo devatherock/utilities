@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-06-03
+### Changed
+- KafkaQuery - Decreased total runtime by consuming only up to whichever was the last offset at the start of execution
+
 ## 2020-06-01
 ### Added
 - `--debug` flag to view debug logs
