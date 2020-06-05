@@ -47,7 +47,8 @@ cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
 cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', 'Poll timeout, in milliseconds')
 cli.s(longOpt: 'start-time', args: 1, argName: 'start-time', 'Start time from which to look for messages')
 cli.e(longOpt: 'end-time', args: 1, argName: 'end-time', 'End time upto which to look for messages')
-cli.l(longOpt: 'limit', args: 1, argName: 'limit', 'Maximum of messages to consume, to check for a match')
+cli.cl(longOpt: 'consume-limit', args: 1, argName: 'consume-limit', 'Maximum number of messages to consume')
+cli.ml(longOpt: 'match-limit', args: 1, argName: 'match-limit', 'Maximum number of matches to find')
 cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the message format is avro')
 cli._(longOpt: 'debug', args: 0, argName: 'debug', 'Enables debug logs')
 
@@ -68,10 +69,12 @@ if (options.debug) {
 @Field long startTime
 @Field AtomicInteger matchedCount = new AtomicInteger(0)
 @Field int maxMessagesToConsume
+@Field int maximumMatches
 @Field Map endOffsetsMap = [:]
 
 startTime = options.s ? Long.parseLong(options.s) : 0
-maxMessagesToConsume = options.l ? Integer.parseInt(options.l) : 0
+maxMessagesToConsume = options.cl ? Integer.parseInt(options.cl) : Integer.MAX_VALUE
+maximumMatches = options.ml ? Integer.parseInt((options.ml)) : Integer.MAX_VALUE
 if (options.f) {
     outputFile = new File(options.f)
 }
@@ -142,7 +145,8 @@ if (endOffsetsMap) {
             long currentMessageTimestamp = 0
             ConsumerRecord currentRecord
 
-            while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime && (!currentRecord ||
+            while (matchedCount.get() < maximumMatches && consumedCount.get() < maxMessagesToConsume &&
+                    noRecordsCount < giveUp && currentMessageTimestamp <= endTime && (!currentRecord ||
                     (currentRecord.offset() + 1) < endOffsetsMap[currentRecord.partition()])) {
                 ConsumerRecords consumerRecords = consumer.poll(pollDuration)
 
@@ -228,23 +232,20 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
         logger.fine({ "Time based offsets: ${timeOffsets}".toString() })
 
         timeOffsets.each { partition, offsetAndTime ->
-            if (offsetAndTime) {
-                startOffsets[partition, offsetAndTime.offset()]
-            } else {
-                assignment.remove(partition)
-                endOffsetsMap.remove(partition.partition())
-            }
+            startOffsets[partition] = offsetAndTime.offset()
+        }
+
+        // Don't consume from partitions that don't have messages newer than start time
+        endOffsets.findAll { key, value -> !startOffsets[key] }.each { partition, offset ->
+            assignment.remove(partition)
+            endOffsetsMap.remove(partition.partition())
         }
     }
 
     // Start offset based on limit
-    if (maxMessagesToConsume > 0) {
+    if (!startOffsets && maxMessagesToConsume < Integer.MAX_VALUE) {
         assignment.each { partition ->
-            long startOffsetByLimit = endOffsets[partition] - maxMessagesToConsume
-
-            if (!startOffsets[partition] || startOffsets[partition] < startOffsetByLimit) {
-                startOffsets[partition] = startOffsetByLimit
-            }
+            startOffsets[partition] = endOffsets[partition] - maxMessagesToConsume
         }
     }
 

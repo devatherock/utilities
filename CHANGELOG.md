@@ -3,6 +3,7 @@
 ## 2020-06-05
 ### Added
 - CopyIssue - Copies a github issue from one repository to another
+- KafkaQuery - An option to limit number of results
 
 ### Changed
 - [Issue 8](https://github.com/devatherock/utilities/issues/8): When start time is specified, consumed only from offsets 
