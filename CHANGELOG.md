@@ -1,5 +1,13 @@
 # Changelog
 
+## 2020-06-05
+### Added
+- CopyIssue - Copies a github issue from one repository to another
+
+### Changed
+- [Issue 8](https://github.com/devatherock/utilities/issues/8): When start time is specified, consumed only from offsets 
+that are newer instead of consuming from the beginning
+
 ## 2020-06-03
 ### Changed
 - KafkaQuery - Decreased total runtime by consuming only up to whichever was the last offset at the start of execution

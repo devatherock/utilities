@@ -8,6 +8,7 @@ import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.consumer.KafkaConsumer
+import org.apache.kafka.clients.consumer.OffsetAndTimestamp
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.PartitionInfo
 import org.apache.kafka.common.serialization.StringDeserializer
@@ -62,13 +63,20 @@ if (options.debug) {
     root.getHandlers().each { it.setLevel(java.util.logging.Level.FINE) }
 }
 
-// Write kafka messages to output in a single thread
 @Field LinkedBlockingQueue kafkaMessageQueue = new LinkedBlockingQueue(1000)
 @Field File outputFile = null
+@Field long startTime
+@Field AtomicInteger matchedCount = new AtomicInteger(0)
+@Field int maxMessagesToConsume
+@Field Map endOffsetsMap = [:]
+
+startTime = options.s ? Long.parseLong(options.s) : 0
+maxMessagesToConsume = options.l ? Integer.parseInt(options.l) : 0
 if (options.f) {
     outputFile = new File(options.f)
 }
 
+// Write kafka messages to output in a single thread
 boolean isRunning = true
 Thread messageWriteThread = Thread.start {
     def messagesToWrite = []
@@ -95,7 +103,6 @@ Thread messageWriteThread = Thread.start {
     }
 }
 
-
 Properties props = new Properties()
 !options.b ?: props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, options.b)
 !options.g ?: props.put(ConsumerConfig.GROUP_ID_CONFIG, options.g)
@@ -117,44 +124,39 @@ final String propertyJsonPath = options.p
 final def propertyValues = options.v ? options.v.split('[,]') as List : null
 final long processStartTime = System.currentTimeMillis()
 final long endTime = options.e ? Long.parseLong(options.e) : processStartTime
-final long startTime = options.s ? Long.parseLong(options.s) : 0
 final int giveUp = 10
 final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 5000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
-@Field AtomicInteger matchedCount = new AtomicInteger(0)
 AtomicInteger consumedCount = new AtomicInteger(0)
 
 // Initialize the consumers
-@Field int maxMessagesToConsume
-maxMessagesToConsume = options.l ? Integer.parseInt(options.l) : 0
-@Field Map endOffsetsMap = [:]
 List consumers = createConsumers(options.t, props)
 logger.fine({ "End offsets: ${endOffsetsMap}".toString() })
 
-// Execute each consumer in its own thread
-List<Thread> threads = []
-consumers.each { consumer ->
-    threads.add(Thread.start {
-        int noRecordsCount = 0
-        long currentMessageTimestamp = 0
-        ConsumerRecord currentRecord
+if (endOffsetsMap) {
+    // Execute each consumer in its own thread
+    List<Thread> threads = []
+    consumers.each { consumer ->
+        threads.add(Thread.start {
+            int noRecordsCount = 0
+            long currentMessageTimestamp = 0
+            ConsumerRecord currentRecord
 
-        while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime && (!currentRecord ||
-                (currentRecord.offset() + 1) < endOffsetsMap[currentRecord.partition()])) {
-            ConsumerRecords consumerRecords = consumer.poll(pollDuration)
+            while (noRecordsCount < giveUp && currentMessageTimestamp <= endTime && (!currentRecord ||
+                    (currentRecord.offset() + 1) < endOffsetsMap[currentRecord.partition()])) {
+                ConsumerRecords consumerRecords = consumer.poll(pollDuration)
 
-            if (consumerRecords.count() == 0) {
-                logger.fine('No records found')
-                noRecordsCount++
-            } else {
-                noRecordsCount = 0 // Reset each time we find records
-                consumerRecords.each { record ->
-                    currentRecord = record
-                    logger.fine(
-                            { "Current record: ${currentRecord.partition()}:${currentRecord.offset()}".toString() })
-                    consumedCount.incrementAndGet()
+                if (consumerRecords.count() == 0) {
+                    logger.fine('No records found')
+                    noRecordsCount++
+                } else {
+                    noRecordsCount = 0 // Reset each time we find records
+                    consumerRecords.each { record ->
+                        currentRecord = record
+                        logger.fine(
+                                { "Current record: ${currentRecord.partition()}:${currentRecord.offset()}".toString() })
+                        consumedCount.incrementAndGet()
 
-                    if (record.timestamp() >= startTime) {
                         if (ids) {
                             if (ids.contains(record.key)) {
                                 writeOutput(record)
@@ -162,21 +164,22 @@ consumers.each { consumer ->
                         } else if (propertyValues.contains(JsonPath.read(record.value.toString(), propertyJsonPath))) {
                             writeOutput(record)
                         }
+
+                        currentMessageTimestamp = record.timestamp()
                     }
-                    currentMessageTimestamp = record.timestamp()
                 }
             }
-        }
-        consumer.close()
-    })
+            consumer.close()
+        })
+    }
+
+    // Wait for all consumers to exit
+    threads.each { it.join() }
 }
 
-// Wait for all consumers to exit
-threads.each { it.join() }
 isRunning = false
 messageWriteThread.join()
 logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime) / 1000} seconds"
-
 
 /**
  * Creates as many consumers as the number of partitions in the topic
@@ -211,20 +214,57 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
  */
 void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
     List<TopicPartition> assignment = [new TopicPartition(partitionInfo.topic(), partitionInfo.partition())]
-    consumer.assign(assignment)
 
+    Map<TopicPartition, Long> startOffsets = [:]
     Map<TopicPartition, Long> endOffsets = consumer.endOffsets(assignment)
-    def endOffsetEntry = endOffsets.entrySet().first()
-    endOffsetsMap[endOffsetEntry.key.partition()] = endOffsetEntry.value
+    endOffsets.each { key, value ->
+        endOffsetsMap[key.partition()] = value
+    }
 
+    // Start offset within the time range
+    if (startTime > 0) {
+        Map<TopicPartition, Long> timestampsToSearch = assignment.collectEntries { [it, startTime] }
+        Map<TopicPartition, OffsetAndTimestamp> timeOffsets = consumer.offsetsForTimes(timestampsToSearch)
+        logger.fine({ "Time based offsets: ${timeOffsets}".toString() })
+
+        timeOffsets.each { partition, offsetAndTime ->
+            if (offsetAndTime) {
+                startOffsets[partition, offsetAndTime.offset()]
+            } else {
+                assignment.remove(partition)
+                endOffsetsMap.remove(partition.partition())
+            }
+        }
+    }
+
+    // Start offset based on limit
     if (maxMessagesToConsume > 0) {
-        logger.fine(
-                {
-                    "Seeking partition ${endOffsetEntry.key.partition()} to ${endOffsetEntry.value - maxMessagesToConsume}".toString()
-                })
-        consumer.seek(endOffsetEntry.key, endOffsetEntry.value - maxMessagesToConsume)
+        assignment.each { partition ->
+            long startOffsetByLimit = endOffsets[partition] - maxMessagesToConsume
+
+            if (!startOffsets[partition] || startOffsets[partition] < startOffsetByLimit) {
+                startOffsets[partition] = startOffsetByLimit
+            }
+        }
+    }
+
+    // Assignment will be empty if start time is specified and no messages newer than the start time exist
+    if (assignment) {
+        consumer.assign(assignment)
+
+        if (startOffsets) {
+            startOffsets.each { partition, offset ->
+                logger.fine(
+                        {
+                            "Seeking partition ${partition.partition()} to ${offset}".toString()
+                        })
+                consumer.seek(partition, offset)
+            }
+        } else {
+            consumer.seekToBeginning(assignment)
+        }
     } else {
-        consumer.seekToBeginning(assignment)
+        consumer.close()
     }
 }
 
