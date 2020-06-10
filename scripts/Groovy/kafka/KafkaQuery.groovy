@@ -232,7 +232,9 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
         logger.fine({ "Time based offsets: ${timeOffsets}".toString() })
 
         timeOffsets.each { partition, offsetAndTime ->
-            startOffsets[partition] = offsetAndTime.offset()
+            if(offsetAndTime) {
+                startOffsets[partition] = offsetAndTime.offset()
+            }
         }
 
         // Don't consume from partitions that don't have messages newer than start time

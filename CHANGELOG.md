@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-06-09
+### Added
+- KafkaQuery - A required null check
+
 ## 2020-06-05
 ### Added
 - CopyIssue - Copies a github issue from one repository to another
