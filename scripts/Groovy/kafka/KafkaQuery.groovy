@@ -232,7 +232,7 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
         logger.fine({ "Time based offsets: ${timeOffsets}".toString() })
 
         timeOffsets.each { partition, offsetAndTime ->
-            if(offsetAndTime) {
+            if (offsetAndTime) {
                 startOffsets[partition] = offsetAndTime.offset()
             }
         }
@@ -278,5 +278,6 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
  */
 def writeOutput(ConsumerRecord record) {
     matchedCount.incrementAndGet()
+    logger.fine({ "Matched record: ${record.partition()}:${record.offset()}, timestamp: ${record.timestamp()}".toString() })
     kafkaMessageQueue.put(record.value)
 }

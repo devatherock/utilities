@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-06-29
+### Added
+- Script to update offset of a kafka consumer group
+
 ## 2020-06-09
 ### Added
 - KafkaQuery - A required null check
@@ -10,7 +14,7 @@
 - KafkaQuery - An option to limit number of results
 
 ### Changed
-- [Issue 8](https://github.com/devatherock/utilities/issues/8): When start time is specified, consumed only from offsets 
+- [Issue 8](https://github.com/devatherock/utilities/issues/8): When start time is specified, consumed only from offsets
 that are newer instead of consuming from the beginning
 
 ## 2020-06-03
