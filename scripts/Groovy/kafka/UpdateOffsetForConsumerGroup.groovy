@@ -1,4 +1,4 @@
-@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
+@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.5.0')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 
 import groovy.transform.Field
@@ -46,6 +46,8 @@ if (options.c) {
 !options.g ?: props.put(ConsumerConfig.GROUP_ID_CONFIG, options.g)
 props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName())
 props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName())
+props.put('max.poll.records', 1)
+props.put('enable.auto.commit', false)
 
 // Create the consumer using props.
 final Consumer<Long, String> consumer = new KafkaConsumer<>(props)

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2020-07-01
+### Changed
+- UpdateOffsetForConsumerGroup - Disabled auto commit. Set `max.poll.records` to 1
+
 ## 2020-06-29
 ### Added
 - Script to update offset of a kafka consumer group
