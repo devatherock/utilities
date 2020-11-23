@@ -4,6 +4,7 @@
 ### Added
 - [#7](https://github.com/devatherock/utilities/issues/7): KafkaPublisher - Counter to keep track of number of messages 
 published
+- Script to base64 encode and decode
 
 ## 2020-07-01
 ### Changed
