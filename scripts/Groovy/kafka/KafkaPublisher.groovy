@@ -3,8 +3,16 @@
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
+@Grab(group='io.micrometer', module='micrometer-registry-jmx', version='1.5.7')
 
 import groovy.transform.Field
+
+import io.micrometer.core.instrument.Clock
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.jmx.JmxConfig
+import io.micrometer.jmx.JmxMeterRegistry
+
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.avro.io.DecoderFactory
@@ -62,6 +70,8 @@ if (isAvro && !options.s) {
 
 @Field List<Future> requests = []
 @Field Producer<String, String> producer
+@Field MeterRegistry meterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
+@Field Counter numberOfMessages = Counter.builder('counter.messages').register(meterRegistry)
 
 Properties props = new Properties()
 !options.b ?: props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.b)
@@ -133,6 +143,7 @@ GenericRecord convertObjectToGenericRecord(String input, Schema schema) {
  */
 void sendMessage(def producerRecord) {
     requests.add(producer.send(producerRecord))
+    numberOfMessages.increment()
 
     if (requests.size() == 500) {
         requests.each { it.get() }

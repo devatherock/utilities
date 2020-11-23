@@ -1,5 +1,10 @@
 # Changelog
 
+## 2020-11-23
+### Added
+- [#7](https://github.com/devatherock/utilities/issues/7): KafkaPublisher - Counter to keep track of number of messages 
+published
+
 ## 2020-07-01
 ### Changed
 - UpdateOffsetForConsumerGroup - Disabled auto commit. Set `max.poll.records` to 1
