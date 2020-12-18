@@ -24,3 +24,13 @@ groovy Base64.groovy -f /path/to/file
 ```
 groovy Base64.groovy -D -i aGVsbG8=
 ```
+
+### Deduplicater.groovy
+```
+groovy Deduplicater.groovy -i /path/to/input/file -o /path/to/output/file
+```
+
+### ExtractColumnFromCsv.groovy
+```
+groovy ExtractColumnFromCsv.groovy -i /path/to/input/file -o /path/to/output/file -c <1-based column number>
+```

@@ -1,5 +1,10 @@
 # Changelog
 
+## 2020-12-18
+### Added
+- Script to extract a specific column from a CSV file
+- Script to deduplicate records in a file
+
 ## 2020-11-23
 ### Added
 - [#7](https://github.com/devatherock/utilities/issues/7): KafkaPublisher - Counter to keep track of number of messages 
