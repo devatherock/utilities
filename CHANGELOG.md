@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-01-26
+### Changed
+- [#9](https://github.com/devatherock/utilities/issues/9): Retained only consumers that are open
+
 ## 2020-12-18
 ### Added
 - Script to extract a specific column from a CSV file
