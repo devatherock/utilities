@@ -207,7 +207,7 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
         initializeConsumer(consumer, partitions[index])
     }
 
-    return consumers
+    return consumers.findAll { !it.closed }
 }
 
 /**
