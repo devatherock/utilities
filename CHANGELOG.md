@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-01-29
+### Added
+- feat(KafkaPublisher): Ability to produce multiple avro messages
+
 ## 2021-01-26
 ### Changed
 - [#9](https://github.com/devatherock/utilities/issues/9): Retained only consumers that are open

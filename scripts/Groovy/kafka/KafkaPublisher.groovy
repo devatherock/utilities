@@ -60,18 +60,20 @@ if (!(options.t && options.k && (options.c || options.b))) {
     System.exit(1)
 }
 
+@Field boolean isAvro
+@Field List<Future> requests = []
+@Field Producer<String, String> producer
+@Field MeterRegistry meterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
+@Field Counter numberOfMessages = Counter.builder('counter.messages').register(meterRegistry)
+@Field Schema schema
+
 String messageFormat = options.fo
-boolean isAvro = (messageFormat == 'AVRO')
+isAvro = (messageFormat == 'AVRO')
 if (isAvro && !options.s) {
     LOGGER.severe('Schema file must be specified')
     cli.usage()
     System.exit(1)
 }
-
-@Field List<Future> requests = []
-@Field Producer<String, String> producer
-@Field MeterRegistry meterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
-@Field Counter numberOfMessages = Counter.builder('counter.messages').register(meterRegistry)
 
 Properties props = new Properties()
 !options.b ?: props.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, options.b)
@@ -81,6 +83,7 @@ if (isAvro) {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, KafkaAvroSerializer.class.name)
     props.put(KafkaAvroSerializerConfig.VALUE_SUBJECT_NAME_STRATEGY,
             'io.confluent.kafka.serializers.subject.TopicRecordNameStrategy')
+    schema = new Schema.Parser().parse(new File(options.s).text)
 } else {
     props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.name)
 }
@@ -101,27 +104,36 @@ String inputFileName = options.f
 
 if (options.multiple) {
     new File(inputFileName).each { request ->
-        sendMessage(new ProducerRecord<String, String>(topic, JsonPath.read(request, key), request))
+        produceSingleMessage(topic, request, key)
         count++
     }
 } else {
     String request = new File(inputFileName).text
-    ProducerRecord producerRecord
-
-    if (isAvro) {
-        Schema schema = new Schema.Parser().parse(new File(options.s).text)
-        producerRecord = new ProducerRecord<String, String>(topic, JsonPath.read(request, key),
-                convertObjectToGenericRecord(request, schema))
-    } else {
-        producerRecord = new ProducerRecord<String, String>(topic, key, request)
-    }
-
-    sendMessage(producerRecord)
+    produceSingleMessage(topic, request, key)
     count++
 }
 
 producer.close()
 LOGGER.info("Produced ${count} records")
+
+/**
+ * Produces a single kafka message
+ *
+ * @param topic
+ * @param request
+ * @param key
+ */
+void produceSingleMessage(String topic, String request, String key) {
+    ProducerRecord producerRecord
+
+    if (isAvro) {
+        producerRecord = new ProducerRecord<String, String>(topic, JsonPath.read(request, key),
+                convertObjectToGenericRecord(request, schema))
+    } else {
+        producerRecord = new ProducerRecord<String, String>(topic, key, request)
+    }
+    sendMessage(producerRecord)
+}
 
 /**
  * Converts an object into a avro record
