@@ -37,7 +37,7 @@ String sourceRepoName = options.sr
 String targetRepoName = options.tr
 int issueId = Integer.parseInt(options.i)
 
-GitHub github = GitHub.connectToEnterpriseWithOAuth(gitUrl + '/api/v3', username, gitToken)
+GitHub github = GitHub.connectToEnterpriseWithOAuth(gitUrl, username, gitToken)
 GHOrganization organization = github.getOrganization(gitOrg)
 GHRepository sourceRepo = organization.getRepository(sourceRepoName)
 GHRepository targetRepo = organization.getRepository(targetRepoName)

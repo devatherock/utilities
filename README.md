@@ -1,7 +1,7 @@
 # utilities
 Utility scripts to perform common, repetitive tasks
 
-## Usage
+## Google
 ### GoogleAccessToken.groovy
 - To generate an access token for Firebase cloud messaging
 
@@ -9,6 +9,24 @@ Utility scripts to perform common, repetitive tasks
 groovy GoogleAccessToken.groovy -c "path/to/service-accounts.json" -s "https://www.googleapis.com/auth/firebase.messaging"
 ```
 
+## Github
+### AddLabelToIssues.groovy
+Adds a supplied label to issues with a specific string in title. When using with github enterprise, an API URL including
+the `/api/v3` path would need to be supplied
+
+- To use with a repo in an org
+```shell
+groovy github/AddLabelToIssues.groovy -t <GIT_TOKEN> -n <username> -o <org> -r <repo-name> \
+  -s <search-string> -l <label>
+```
+
+- To use with a repo under a username
+```shell
+groovy github/AddLabelToIssues.groovy -t <GIT_TOKEN> -n <username> -r <repo-name> -s <search-string> -l <label>
+```
+
+
+## Other scripts
 ### Base64.groovy
 - To encode a string
 ```

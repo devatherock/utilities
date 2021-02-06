@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-02-05
+### Added
+- feat(AddLabelToIssues): Script to add a label to git issues with a specific string in title
+
 ## 2021-01-29
 ### Added
 - feat(KafkaPublisher): Ability to produce multiple avro messages
