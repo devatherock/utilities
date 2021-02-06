@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-02-06
+### Added
+- feat(CloseIssues): Script to close git issues with a specific label
+
 ## 2021-02-05
 ### Added
 - feat(AddLabelToIssues): Script to add a label to git issues with a specific string in title

@@ -45,5 +45,5 @@ repository.getIssues(GHIssueState.ALL)
         .findAll { it.title.contains(searchString) }
         .each { issue ->
             issue.setLabels(label)
-            logger.info({ "Added label '${label}' to issue-${issue.number}".toString() })
+            logger.info({ "Added label to issue-${issue.number}".toString() })
         }

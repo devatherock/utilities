@@ -9,10 +9,12 @@ Utility scripts to perform common, repetitive tasks
 groovy GoogleAccessToken.groovy -c "path/to/service-accounts.json" -s "https://www.googleapis.com/auth/firebase.messaging"
 ```
 
+
 ## Github
+When using these scripts with github enterprise, an API URL including the `/api/v3` path would need to be supplied
+
 ### AddLabelToIssues.groovy
-Adds a supplied label to issues with a specific string in title. When using with github enterprise, an API URL including
-the `/api/v3` path would need to be supplied
+Adds a supplied label to issues with a specific string in title
 
 - To use with a repo in an org
 ```shell
@@ -25,6 +27,18 @@ groovy github/AddLabelToIssues.groovy -t <GIT_TOKEN> -n <username> -o <org> -r <
 groovy github/AddLabelToIssues.groovy -t <GIT_TOKEN> -n <username> -r <repo-name> -s <search-string> -l <label>
 ```
 
+### CloseIssues.groovy
+Closes issues that have a specific label
+
+- To use with a repo in an org
+```shell
+groovy github/CloseIssues.groovy -t <GIT_TOKEN> -n <username> -o <org> -r <repo-name> -l <label>
+```
+
+- To use with a repo under a username
+```shell
+groovy github/CloseIssues.groovy -t <GIT_TOKEN> -n <username> -r <repo-name> -l <label>
+```
 
 ## Other scripts
 ### Base64.groovy
