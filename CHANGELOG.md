@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-02-24
+### Added
+- feat(KafkaQuery): Ability to read all messages without key or json path filter
+
 ## 2021-02-06
 ### Added
 - feat(CloseIssues): Script to close git issues with a specific label

@@ -19,6 +19,7 @@ import ch.qos.logback.classic.Level
 
 import groovy.cli.commons.CliBuilder
 import com.jayway.jsonpath.JsonPath
+import com.jayway.jsonpath.PathNotFoundException
 import groovy.transform.Field
 
 import java.time.temporal.ChronoUnit
@@ -53,7 +54,7 @@ cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the mess
 cli._(longOpt: 'debug', args: 0, argName: 'debug', 'Enables debug logs')
 
 def options = cli.parse(args)
-if (!(options.t && (options.k || (options.p && options.v)) && (options.c || (options.b && options.g)))) {
+if (!(options.t && (options.c || (options.b && options.g)))) {
     cli.usage()
     System.exit(1)
 }
@@ -165,7 +166,15 @@ if (endOffsetsMap) {
                             if (ids.contains(record.key)) {
                                 writeOutput(record)
                             }
-                        } else if (propertyValues.contains(JsonPath.read(record.value.toString(), propertyJsonPath))) {
+                        } else if (propertyValues) {
+                            try {
+                                if (propertyValues.contains(JsonPath.read(record.value.toString(), propertyJsonPath))) {
+                                    writeOutput(record)
+                                }
+                            } catch (PathNotFoundException exception) {
+                                logger.fine(exception.getMessage())
+                            }
+                        } else {
                             writeOutput(record)
                         }
 
@@ -257,10 +266,7 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
 
         if (startOffsets) {
             startOffsets.each { partition, offset ->
-                logger.fine(
-                        {
-                            "Seeking partition ${partition.partition()} to ${offset}".toString()
-                        })
+                logger.fine({ "Seeking partition ${partition.partition()} to ${offset}".toString() })
                 consumer.seek(partition, offset)
             }
         } else {
