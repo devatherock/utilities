@@ -22,17 +22,24 @@ import com.jayway.jsonpath.JsonPath
 import com.jayway.jsonpath.PathNotFoundException
 import groovy.transform.Field
 
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.time.Duration
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
+import java.util.regex.Pattern
 
 LoggerFactory.getLogger('root').setLevel(Level.INFO)
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
-@Field Logger logger = Logger.getLogger('KafkaQuery.log')
+@Field static final Pattern PTRN_EPOCH_TIME = Pattern.compile('[0-9]{1,}')
+@Field static final DateTimeFormatter LOCAL_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").
+        withZone( ZoneId.systemDefault() )
+@Field static final Logger LOGGER = Logger.getLogger('KafkaQuery.log')
 
 def cli = new CliBuilder(usage: 'groovy KafkaQuery.groovy [options]', width: 100)
 cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers', 'Comma separated list of kafka brokers')
@@ -73,7 +80,7 @@ if (options.debug) {
 @Field int maximumMatches
 @Field Map endOffsetsMap = [:]
 
-startTime = options.s ? Long.parseLong(options.s) : 0
+startTime = options.s ? parseTimestamp(options.s) : 0
 maxMessagesToConsume = options.cl ? Integer.parseInt(options.cl) : Integer.MAX_VALUE
 maximumMatches = options.ml ? Integer.parseInt((options.ml)) : Integer.MAX_VALUE
 if (options.f) {
@@ -127,7 +134,7 @@ final def ids = options.k ? options.k.split('[,]') as List : false
 final String propertyJsonPath = options.p
 final def propertyValues = options.v ? options.v.split('[,]') as List : null
 final long processStartTime = System.currentTimeMillis()
-final long endTime = options.e ? Long.parseLong(options.e) : processStartTime
+final long endTime = options.e ? parseTimestamp(options.e) : processStartTime
 final int giveUp = 10
 final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 5000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
@@ -135,7 +142,7 @@ AtomicInteger consumedCount = new AtomicInteger(0)
 
 // Initialize the consumers
 List consumers = createConsumers(options.t, props)
-logger.fine({ "End offsets: ${endOffsetsMap}".toString() })
+LOGGER.fine({ "End offsets: ${endOffsetsMap}".toString() })
 
 if (endOffsetsMap) {
     // Execute each consumer in its own thread
@@ -152,13 +159,13 @@ if (endOffsetsMap) {
                 ConsumerRecords consumerRecords = consumer.poll(pollDuration)
 
                 if (consumerRecords.count() == 0) {
-                    logger.fine('No records found')
+                    LOGGER.fine('No records found')
                     noRecordsCount++
                 } else {
                     noRecordsCount = 0 // Reset each time we find records
                     consumerRecords.each { record ->
                         currentRecord = record
-                        logger.fine(
+                        LOGGER.fine(
                                 { "Current record: ${currentRecord.partition()}:${currentRecord.offset()}".toString() })
                         consumedCount.incrementAndGet()
 
@@ -172,7 +179,7 @@ if (endOffsetsMap) {
                                     writeOutput(record)
                                 }
                             } catch (PathNotFoundException exception) {
-                                logger.fine(exception.getMessage())
+                                LOGGER.fine(exception.getMessage())
                             }
                         } else {
                             writeOutput(record)
@@ -192,7 +199,25 @@ if (endOffsetsMap) {
 
 isRunning = false
 messageWriteThread.join()
-logger.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime) / 1000} seconds"
+LOGGER.info "Consumed count: ${consumedCount}, Matched count: ${matchedCount}, Time taken: ${(System.currentTimeMillis() - processStartTime) / 1000} seconds"
+
+/**
+ * Parses timestamps specified in different formats
+ *
+ * @param date
+ * @return an epoch timestamp
+ */
+Long parseTimestamp(String timestamp) {
+    Long parsedTimestamp = 0
+
+    if (PTRN_EPOCH_TIME.matcher(timestamp).matches()) {
+        parsedTimestamp = Long.parseLong(timestamp)
+    } else {
+        parsedTimestamp = Instant.from(LOCAL_TIME_FORMATTER.parse(timestamp)).toEpochMilli()
+    }
+
+    return parsedTimestamp
+}
 
 /**
  * Creates as many consumers as the number of partitions in the topic
@@ -238,7 +263,7 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
     if (startTime > 0) {
         Map<TopicPartition, Long> timestampsToSearch = assignment.collectEntries { [it, startTime] }
         Map<TopicPartition, OffsetAndTimestamp> timeOffsets = consumer.offsetsForTimes(timestampsToSearch)
-        logger.fine({ "Time based offsets: ${timeOffsets}".toString() })
+        LOGGER.fine({ "Time based offsets: ${timeOffsets}".toString() })
 
         timeOffsets.each { partition, offsetAndTime ->
             if (offsetAndTime) {
@@ -266,7 +291,7 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
 
         if (startOffsets) {
             startOffsets.each { partition, offset ->
-                logger.fine({ "Seeking partition ${partition.partition()} to ${offset}".toString() })
+                LOGGER.fine({ "Seeking partition ${partition.partition()} to ${offset}".toString() })
                 consumer.seek(partition, offset)
             }
         } else {
@@ -284,6 +309,6 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
  */
 def writeOutput(ConsumerRecord record) {
     matchedCount.incrementAndGet()
-    logger.fine({ "Matched record: ${record.partition()}:${record.offset()}, timestamp: ${record.timestamp()}".toString() })
+    LOGGER.fine({ "Matched record: ${record.partition()}:${record.offset()}, timestamp: ${record.timestamp()}".toString() })
     kafkaMessageQueue.put(record.value)
 }

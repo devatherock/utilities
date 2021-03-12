@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-03-12
+### Added
+- feat(KafkaQuery): Ability to specify timestamps in `yyyy-MM-dd'T'HH:mm:ss` format([#11](https://github.com/devatherock/utilities/issues/11))
+
 ## 2021-02-24
 ### Added
 - feat(KafkaQuery): Ability to read all messages without key or json path filter
