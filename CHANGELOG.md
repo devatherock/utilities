@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-06-28
+### Changed
+- fix(KafkaPublisher): Fixed JSON kafka messages not being produced with correct key
+
 ## 2021-03-12
 ### Added
 - feat(KafkaQuery): Ability to specify timestamps in `yyyy-MM-dd'T'HH:mm:ss` format([#11](https://github.com/devatherock/utilities/issues/11))
