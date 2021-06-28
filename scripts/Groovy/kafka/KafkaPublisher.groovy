@@ -3,7 +3,7 @@
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
-@Grab(group='io.micrometer', module='micrometer-registry-jmx', version='1.5.7')
+@Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
 
 import groovy.transform.Field
 
@@ -104,12 +104,12 @@ String inputFileName = options.f
 
 if (options.multiple) {
     new File(inputFileName).each { request ->
-        produceSingleMessage(topic, request, key)
+        produceSingleMessage(topic, request, key, true)
         count++
     }
 } else {
     String request = new File(inputFileName).text
-    produceSingleMessage(topic, request, key)
+    produceSingleMessage(topic, request, key, false)
     count++
 }
 
@@ -122,15 +122,17 @@ LOGGER.info("Produced ${count} records")
  * @param topic
  * @param request
  * @param key
+ * @param isJsonPathKey
  */
-void produceSingleMessage(String topic, String request, String key) {
+void produceSingleMessage(String topic, String request, String key, boolean isJsonPathKey) {
     ProducerRecord producerRecord
+    String messageKey = isJsonPathKey ? JsonPath.read(request, key) : key
 
     if (isAvro) {
-        producerRecord = new ProducerRecord<String, String>(topic, JsonPath.read(request, key),
+        producerRecord = new ProducerRecord<String, String>(topic, messageKey,
                 convertObjectToGenericRecord(request, schema))
     } else {
-        producerRecord = new ProducerRecord<String, String>(topic, key, request)
+        producerRecord = new ProducerRecord<String, String>(topic, messageKey, request)
     }
     sendMessage(producerRecord)
 }
@@ -154,6 +156,7 @@ GenericRecord convertObjectToGenericRecord(String input, Schema schema) {
  * @param producerRecord
  */
 void sendMessage(def producerRecord) {
+    LOGGER.fine({ "Sending message '${producerRecord.key}".toString() })
     requests.add(producer.send(producerRecord))
     numberOfMessages.increment()
 
