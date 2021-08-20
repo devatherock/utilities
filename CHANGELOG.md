@@ -1,5 +1,13 @@
 # Changelog
 
+## 2021-08-20
+### Added
+- feat(Base64): Ability to write decoded output to a file
+- feat(KafkaQuery): Ability to include key in the output and also to do string matching in non-JSON messages
+
+### Changed
+- feat(UpdateOffsetForConsumerGroup): Made poll timeout configurable
+
 ## 2021-06-28
 ### Changed
 - fix(KafkaPublisher): Fixed JSON kafka messages not being produced with correct key
