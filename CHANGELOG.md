@@ -4,6 +4,7 @@
 ### Added
 - feat(Base64): Ability to write decoded output to a file
 - feat(KafkaQuery): Ability to include key in the output and also to do string matching in non-JSON messages
+- Script to unescape JSON
 
 ### Changed
 - feat(UpdateOffsetForConsumerGroup): Made poll timeout configurable
