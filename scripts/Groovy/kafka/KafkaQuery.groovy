@@ -38,7 +38,7 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Pattern PTRN_EPOCH_TIME = Pattern.compile('[0-9]{1,}')
 @Field static final DateTimeFormatter LOCAL_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss").
-        withZone( ZoneId.systemDefault() )
+        withZone(ZoneId.systemDefault())
 @Field static final Logger LOGGER = Logger.getLogger('KafkaQuery.log')
 
 def cli = new CliBuilder(usage: 'groovy KafkaQuery.groovy [options]', width: 100)
@@ -47,6 +47,7 @@ cli.g(longOpt: 'group', args: 1, argName: 'group', 'Consumer group id')
 cli.f(longOpt: 'file', args: 1, argName: 'file', 'Output file to write matched records to')
 cli.t(longOpt: 'topic', args: 1, argName: 'topic', 'Kafka topic to consume the records from')
 cli.k(longOpt: 'keys', args: 1, argName: 'keys', 'Comma separated list of keys to match')
+cli.ik(longOpt: 'include-key', args: 0, argName: 'include-key', 'Indicates whether to include the key in the output')
 cli.p(longOpt: 'property', args: 1, argName: 'property', 'Json path property to query for')
 cli.v(longOpt: 'property-value', args: 1, argName: 'property-value', 'Property value to query for')
 cli.r(longOpt: 'registry', args: 1, argName: 'registry', 'Schema registry URL')
@@ -79,8 +80,10 @@ if (options.debug) {
 @Field int maxMessagesToConsume
 @Field int maximumMatches
 @Field Map endOffsetsMap = [:]
+@Field boolean includeKey
 
 startTime = options.s ? parseTimestamp(options.s) : 0
+includeKey = options.ik
 maxMessagesToConsume = options.cl ? Integer.parseInt(options.cl) : Integer.MAX_VALUE
 maximumMatches = options.ml ? Integer.parseInt((options.ml)) : Integer.MAX_VALUE
 if (options.f) {
@@ -174,12 +177,20 @@ if (endOffsetsMap) {
                                 writeOutput(record)
                             }
                         } else if (propertyValues) {
-                            try {
-                                if (propertyValues.contains(JsonPath.read(record.value.toString(), propertyJsonPath))) {
+                            String recordValue = record.value.toString()
+
+                            if (propertyJsonPath == '__value') {
+                                if (propertyValues.any { recordValue.contains(it) }) {
                                     writeOutput(record)
                                 }
-                            } catch (PathNotFoundException exception) {
-                                LOGGER.fine(exception.getMessage())
+                            } else {
+                                try {
+                                    if (propertyValues.contains(JsonPath.read(recordValue, propertyJsonPath))) {
+                                        writeOutput(record)
+                                    }
+                                } catch (PathNotFoundException exception) {
+                                    LOGGER.fine(exception.getMessage())
+                                }
                             }
                         } else {
                             writeOutput(record)
@@ -310,5 +321,10 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
 def writeOutput(ConsumerRecord record) {
     matchedCount.incrementAndGet()
     LOGGER.fine({ "Matched record: ${record.partition()}:${record.offset()}, timestamp: ${record.timestamp()}".toString() })
-    kafkaMessageQueue.put(record.value)
+
+    if (includeKey) {
+        kafkaMessageQueue.put("${record.key},${record.value}")
+    } else {
+        kafkaMessageQueue.put("${record.value}") // Using GString to prevent null values from causing NullPointerException in LinkedBlockingQueue
+    }
 }

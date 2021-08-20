@@ -27,6 +27,8 @@ cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
         'File containing config for connecting to kafka, most commonly SSL settings')
 cli.p(longOpt: 'partition', args: 1, argName: 'partition', 'Partition for which to update the offset')
 cli.o(longOpt: 'offset', args: 1, argName: 'partition', 'New offset for the partition')
+cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', defaultValue: '15000',
+        'Poll timeout, in milliseconds')
 
 def options = cli.parse(args)
 if (!(options.t && options.p && options.o && (options.c || (options.b && options.g)))) {
@@ -53,10 +55,11 @@ props.put('enable.auto.commit', false)
 final Consumer<Long, String> consumer = new KafkaConsumer<>(props)
 TopicPartition partition = new TopicPartition(options.topic, Integer.parseInt(options.p))
 
+long pollTimeout = Long.parseLong(options.pt)
 consumer.subscribe([options.t])
-consumer.poll(Duration.of(5000, ChronoUnit.MILLIS))
+consumer.poll(Duration.of(pollTimeout, ChronoUnit.MILLIS))
 consumer.seek(partition, Long.parseLong(options.o))
-consumer.poll(Duration.of(5000, ChronoUnit.MILLIS))
+consumer.poll(Duration.of(pollTimeout, ChronoUnit.MILLIS))
 
 consumer.commitSync()
 
