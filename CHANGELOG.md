@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-10-06
+### Added
+- feat(UpdateOffsetForConsumerGroup): Ability to seek to earliest or latest offset
+
 ## 2021-08-20
 ### Added
 - feat(Base64): Ability to write decoded output to a file

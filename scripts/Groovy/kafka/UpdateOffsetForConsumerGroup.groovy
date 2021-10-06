@@ -6,6 +6,7 @@ import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.PartitionInfo
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.LoggerFactory
 
@@ -20,18 +21,22 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
 @Field Logger logger = Logger.getLogger('UpdateOffsetForConsumerGroup.log')
 
 def cli = new CliBuilder(usage: 'groovy UpdateOffsetForConsumerGroup.groovy [options]', width: 100)
-cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers', 'Comma separated list of kafka brokers')
+cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers',
+        'Comma separated list of kafka brokers')
 cli.g(longOpt: 'group', args: 1, argName: 'group', 'Consumer group id')
-cli.t(longOpt: 'topic', args: 1, argName: 'topic', 'Kafka topic for which to update the offset')
+cli.t(longOpt: 'topic', args: 1, argName: 'topic', required: true,
+        'Kafka topic for which to update the offset')
 cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
         'File containing config for connecting to kafka, most commonly SSL settings')
-cli.p(longOpt: 'partition', args: 1, argName: 'partition', 'Partition for which to update the offset')
-cli.o(longOpt: 'offset', args: 1, argName: 'partition', 'New offset for the partition')
+cli.p(longOpt: 'partition', args: 1, argName: 'partition',
+        'Partition for which to update the offset')
+cli.o(longOpt: 'offset', args: 1, argName: 'offset', required: true,
+        'New offset for the partition. A number or it can be earliest/latest')
 cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', defaultValue: '15000',
         'Poll timeout, in milliseconds')
 
 def options = cli.parse(args)
-if (!(options.t && options.p && options.o && (options.c || (options.b && options.g)))) {
+if (!options || !(options.c || (options.b && options.g))) {
     cli.usage()
     System.exit(1)
 }
@@ -53,15 +58,34 @@ props.put('enable.auto.commit', false)
 
 // Create the consumer using props.
 final Consumer<Long, String> consumer = new KafkaConsumer<>(props)
-TopicPartition partition = new TopicPartition(options.topic, Integer.parseInt(options.p))
+String topic = options.t
+String offset = options.o
 
 long pollTimeout = Long.parseLong(options.pt)
-consumer.subscribe([options.t])
-consumer.poll(Duration.of(pollTimeout, ChronoUnit.MILLIS))
-consumer.seek(partition, Long.parseLong(options.o))
+consumer.subscribe([topic])
+
+List<TopicPartition> partitions = []
+if (options.p) {
+    partitions.add(new TopicPartition(topic, Integer.parseInt(options.p)))
+} else {
+    List<PartitionInfo> partitionInfoList = consumer.partitionsFor(topic)
+    partitionInfoList.each { partitionInfo ->
+        partitions.add(new TopicPartition(topic, partitionInfo.partition()))
+    }
+}
 consumer.poll(Duration.of(pollTimeout, ChronoUnit.MILLIS))
 
+if (offset == 'earliest') {
+    consumer.seekToBeginning(partitions)
+} else if (offset == 'latest') {
+    consumer.seekToEnd(partitions)
+} else {
+    partitions.each { partition ->
+        consumer.seek(partition, Long.parseLong(offset))
+        logger.info("Updated offset to ${offset} in partition ${partition.partition} of topic ${topic} for group ${options.g}")
+    }
+}
+
+consumer.poll(Duration.of(pollTimeout, ChronoUnit.MILLIS))
 consumer.commitSync()
-
-logger.info "Updated offset to ${options.o} in partition ${options.p} of topic ${options.topic} for group ${options.g}"
 consumer.close()
