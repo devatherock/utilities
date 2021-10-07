@@ -3,6 +3,14 @@
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
+@Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
+
+import io.micrometer.core.instrument.Clock
+import io.micrometer.core.instrument.Counter
+import io.micrometer.core.instrument.Gauge
+import io.micrometer.core.instrument.MeterRegistry
+import io.micrometer.jmx.JmxConfig
+import io.micrometer.jmx.JmxMeterRegistry
 
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecords
@@ -77,6 +85,7 @@ if (options.debug) {
 @Field File outputFile = null
 @Field long startTime
 @Field AtomicInteger matchedCount = new AtomicInteger(0)
+@Field MeterRegistry meterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
 @Field int maxMessagesToConsume
 @Field int maximumMatches
 @Field Map endOffsetsMap = [:]
@@ -143,6 +152,11 @@ final int pollTimeout = options.pt ? Integer.parseInt(options.pt) : 5000
 final Duration pollDuration = Duration.of(pollTimeout, ChronoUnit.MILLIS)
 AtomicInteger consumedCount = new AtomicInteger(0)
 
+Gauge.builder("counter.messages.all", consumedCount, { it.doubleValue() })
+        .register(meterRegistry)
+Gauge.builder("counter.messages.matched", matchedCount, { it.doubleValue() })
+        .register(meterRegistry)
+
 // Initialize the consumers
 List consumers = createConsumers(options.t, props)
 LOGGER.fine({ "End offsets: ${endOffsetsMap}".toString() })
@@ -171,6 +185,10 @@ if (endOffsetsMap) {
                         LOGGER.fine(
                                 { "Current record: ${currentRecord.partition()}:${currentRecord.offset()}".toString() })
                         consumedCount.incrementAndGet()
+                        Counter.builder('counter.messages')
+                                .tag('partition', String.valueOf(record.partition()))
+                                .register(meterRegistry)
+                                .increment()
 
                         if (ids) {
                             if (ids.contains(record.key)) {
