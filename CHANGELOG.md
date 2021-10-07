@@ -3,6 +3,7 @@
 ## 2021-10-06
 ### Added
 - feat(UpdateOffsetForConsumerGroup): Ability to seek to earliest or latest offset
+- feat(KafkaQuery): Metrics to track progress of kafka consumption([#6](https://github.com/devatherock/utilities/issues/6))
 
 ## 2021-08-20
 ### Added
