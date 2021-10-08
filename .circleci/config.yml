@@ -1,0 +1,82 @@
+slack_image: &slack_image
+  docker:
+    - image: devatherock/simple-slack:0.7.0
+      auth:
+        username: $DOCKER_USERNAME
+        password: $DOCKER_PASSWORD
+        
+work_directory: &work_directory
+  working_directory: ~/utilities
+
+resource_class: &resource_class
+  resource_class: small
+
+executors:
+  jdk-executor:
+    docker:
+      - image: cimg/openjdk:11.0
+        auth:
+          username: $DOCKER_USERNAME
+          password: $DOCKER_PASSWORD
+    <<: *resource_class
+    <<: *work_directory
+
+version: 2.1
+jobs:
+  test:
+    executor: jdk-executor
+    steps:
+      - checkout
+      - attach_workspace:
+          at: ~/utilities
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "build.gradle" }}
+            - v1-dependencies-
+      - run: |
+          ./gradlew check
+      - store_artifacts:
+          path: build/reports/jacoco
+      - store_test_results:
+          path: build/test-results
+      - save_cache:
+          paths:
+            - ~/.gradle
+          key: v1-dependencies-{{ checksum "build.gradle" }}
+
+  notify:
+    <<: *slack_image
+    <<: *resource_class
+    environment:
+      TEXT: "Success: {{.CircleBuildUrl}} by {{.CircleUsername}}"
+      COLOR: "#33ad7f"
+      CHANNEL: general
+      TITLE: "Build completed"
+    steps:
+      - run: /bin/simpleslack
+
+workflows:
+  version: 2.1
+  build:
+    jobs:
+      - test:
+          context:
+            - docker-credentials
+          filters:
+            branches:
+              only: master
+      - notify:
+          context:
+            - docker-credentials
+            - slack-webhook
+          requires:
+            - test
+  pr_check:
+    jobs:
+      - test:
+          context:
+            - docker-credentials
+          filters:
+            branches:
+              ignore:
+                - master
