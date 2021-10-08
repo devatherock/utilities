@@ -51,9 +51,9 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
 
 def cli = new CliBuilder(usage: 'groovy KafkaQuery.groovy [options]', width: 100)
 cli.b(longOpt: 'bootstrap-servers', args: 1, argName: 'bootstrap-servers', 'Comma separated list of kafka brokers')
-cli.g(longOpt: 'group', args: 1, argName: 'group', 'Consumer group id')
+cli.g(longOpt: 'group', args: 1, argName: 'group', defaultValue: 'KafkaQuery', 'Consumer group id')
 cli.f(longOpt: 'file', args: 1, argName: 'file', 'Output file to write matched records to')
-cli.t(longOpt: 'topic', args: 1, argName: 'topic', 'Kafka topic to consume the records from')
+cli.t(longOpt: 'topic', args: 1, argName: 'topic', required: true, 'Kafka topic to consume the records from')
 cli.k(longOpt: 'keys', args: 1, argName: 'keys', 'Comma separated list of keys to match')
 cli.ik(longOpt: 'include-key', args: 0, argName: 'include-key', 'Indicates whether to include the key in the output')
 cli.p(longOpt: 'property', args: 1, argName: 'property', 'Json path property to query for')
@@ -70,7 +70,7 @@ cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the mess
 cli._(longOpt: 'debug', args: 0, argName: 'debug', 'Enables debug logs')
 
 def options = cli.parse(args)
-if (!(options.t && (options.c || (options.b && options.g)))) {
+if (!options || !(options.c || options.b)) {
     cli.usage()
     System.exit(1)
 }

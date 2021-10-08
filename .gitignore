@@ -1,3 +1,7 @@
 .project
 *.iml
 .DS_Store
+build/
+.gradle
+code-formatter.xml
+checkstyle.xml
