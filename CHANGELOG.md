@@ -3,6 +3,8 @@
 ## 2021-10-08
 ### Added
 - test(KafkaQuery): An unit test
+- Script to enable branch protection on a Git Repo
+- CI pipeline for unit testing
 
 ## 2021-10-06
 ### Added
