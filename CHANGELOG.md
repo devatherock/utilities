@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-10-08
+### Added
+- test(KafkaQuery): An unit test
+
 ## 2021-10-06
 ### Added
 - feat(UpdateOffsetForConsumerGroup): Ability to seek to earliest or latest offset
