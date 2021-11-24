@@ -195,19 +195,21 @@ if (endOffsetsMap) {
                                 writeOutput(record)
                             }
                         } else if (propertyValues) {
-                            String recordValue = record.value.toString()
+                            if (record.value) { // To handle messages with null body
+                                String recordValue = record.value.toString()
 
-                            if (propertyJsonPath == '__value') {
-                                if (propertyValues.any { recordValue.contains(it) }) {
-                                    writeOutput(record)
-                                }
-                            } else {
-                                try {
-                                    if (propertyValues.contains(JsonPath.read(recordValue, propertyJsonPath))) {
+                                if (propertyJsonPath == '__value') {
+                                    if (propertyValues.any { recordValue.contains(it) }) {
                                         writeOutput(record)
                                     }
-                                } catch (PathNotFoundException exception) {
-                                    LOGGER.fine(exception.getMessage())
+                                } else {
+                                    try {
+                                        if (propertyValues.contains(JsonPath.read(recordValue, propertyJsonPath))) {
+                                            writeOutput(record)
+                                        }
+                                    } catch (PathNotFoundException exception) {
+                                        LOGGER.fine(exception.getMessage())
+                                    }
                                 }
                             }
                         } else {
@@ -343,6 +345,7 @@ def writeOutput(ConsumerRecord record) {
     if (includeKey) {
         kafkaMessageQueue.put("${record.key},${record.value}")
     } else {
-        kafkaMessageQueue.put("${record.value}") // Using GString to prevent null values from causing NullPointerException in LinkedBlockingQueue
+        // Using GString to prevent null values from causing NullPointerException in LinkedBlockingQueue
+        kafkaMessageQueue.put("${record.value}")
     }
 }
