@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-11-24
+### Fixed
+- KafkaQuery: Exception when querying a message with null body
+
 ## 2021-10-08
 ### Added
 - test(KafkaQuery): An unit test
