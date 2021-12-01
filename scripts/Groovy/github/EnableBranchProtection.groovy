@@ -23,6 +23,7 @@ cli.o(longOpt: 'org', args: 1, argName: 'org', 'Github organization')
 cli.r(longOpt: 'repo', args: 1, argName: 'repo', required: true, 'Repository to which to enable branch protection')
 cli.b(longOpt: 'branches', args: 1, argName: 'branches', defaultValue: 'master,main',
         'Comma separated list of branches to protect')
+cli.s(longOpt: 'status-checks', args: 1, argName: 'status-checks', 'Comma separated list of required status checks')
 
 def options = cli.parse(args)
 if (!options) {
@@ -46,6 +47,11 @@ WebClient httpClient = WebClient.builder()
         .build()
 
 def relevantBranches = options.b.split(',') as List
+def requiredStatusChecks = options.s ? [
+        'strict': true,
+        'contexts': options.s.split(',') as List
+]: null
+
 repository.branches.entrySet().findAll { relevantBranches.contains(it.key) }.each { entry ->
     def requiredPullRequestReviews = [
             "dismiss_stale_reviews": true
@@ -61,7 +67,7 @@ repository.branches.entrySet().findAll { relevantBranches.contains(it.key) }.eac
     }
 
     def requestBody = [
-            "required_status_checks"       : null,
+            "required_status_checks"       : requiredStatusChecks,
             "required_pull_request_reviews": requiredPullRequestReviews,
             "restrictions"                 : null,
             "enforce_admins"               : false

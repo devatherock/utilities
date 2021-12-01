@@ -5,3 +5,4 @@ build/
 .gradle
 code-formatter.xml
 checkstyle.xml
+local/

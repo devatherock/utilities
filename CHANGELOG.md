@@ -1,5 +1,9 @@
 # Changelog
 
+## 2021-12-01
+### Added
+- EnableBranchProtection: Ability to specify status checks
+
 ## 2021-11-24
 ### Fixed
 - KafkaQuery: Exception when querying a message with null body
