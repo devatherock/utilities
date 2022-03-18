@@ -1,5 +1,9 @@
 # Changelog
 
+## 2022-03-18
+### Added
+- feat(KafkaQuery): Ability to start querying from a certain offset
+
 ## 2021-12-01
 ### Added
 - EnableBranchProtection: Ability to specify status checks
