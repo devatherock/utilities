@@ -64,6 +64,7 @@ cli.c(longOpt: 'command-config', args: 1, argName: 'command-config',
 cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', 'Poll timeout, in milliseconds')
 cli.s(longOpt: 'start-time', args: 1, argName: 'start-time', 'Start time from which to look for messages')
 cli.e(longOpt: 'end-time', args: 1, argName: 'end-time', 'End time upto which to look for messages')
+cli.so(longOpt: 'start-offset', args: 1, argName: 'start-offset', 'Start offset from which to look for messages')
 cli.cl(longOpt: 'consume-limit', args: 1, argName: 'consume-limit', 'Maximum number of messages to consume')
 cli.ml(longOpt: 'match-limit', args: 1, argName: 'match-limit', 'Maximum number of matches to find')
 cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the message format is avro')
@@ -84,6 +85,7 @@ if (options.debug) {
 @Field LinkedBlockingQueue kafkaMessageQueue = new LinkedBlockingQueue(1000)
 @Field File outputFile = null
 @Field long startTime
+@Field Long startOffset
 @Field AtomicInteger matchedCount = new AtomicInteger(0)
 @Field MeterRegistry meterRegistry = new JmxMeterRegistry(JmxConfig.DEFAULT, Clock.SYSTEM)
 @Field int maxMessagesToConsume
@@ -92,6 +94,7 @@ if (options.debug) {
 @Field boolean includeKey
 
 startTime = options.s ? parseTimestamp(options.s) : 0
+startOffset = options.so ? Long.parseLong(options.so) : null
 includeKey = options.ik
 maxMessagesToConsume = options.cl ? Integer.parseInt(options.cl) : Integer.MAX_VALUE
 maximumMatches = options.ml ? Integer.parseInt((options.ml)) : Integer.MAX_VALUE
@@ -307,6 +310,11 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
             assignment.remove(partition)
             endOffsetsMap.remove(partition.partition())
         }
+    }
+
+    // Start offset specified
+    if (startOffset) {
+        startOffsets[assignment[0]] = startOffset
     }
 
     // Start offset based on limit
