@@ -1,7 +1,7 @@
 @GrabResolver(root = 'http://packages.confluent.io/maven/', name = 'Confluent')
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.11')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
 @Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
 
@@ -36,7 +36,10 @@ import ch.qos.logback.classic.Level
 import java.util.logging.Logger
 import java.util.concurrent.Future
 
-LoggerFactory.getLogger('root').setLevel(Level.INFO)
+if (LoggerFactory.getLogger('root') instanceof ch.qos.logback.classic.Logger) {
+    LoggerFactory.getLogger('root').setLevel(Level.INFO)
+}
+
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Logger LOGGER = Logger.getLogger('KafkaPublisher.log')

@@ -2,6 +2,8 @@
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
 
 import groovy.transform.Field
+import groovy.cli.commons.CliBuilder
+
 import org.apache.kafka.clients.consumer.Consumer
 import org.apache.kafka.clients.consumer.ConsumerConfig
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -15,7 +17,10 @@ import java.time.temporal.ChronoUnit
 import java.util.logging.Logger
 import ch.qos.logback.classic.Level
 
-LoggerFactory.getLogger('org.apache.kafka').setLevel(Level.INFO)
+if (LoggerFactory.getLogger('root') instanceof ch.qos.logback.classic.Logger) {
+    LoggerFactory.getLogger('root').setLevel(Level.INFO)
+}
+
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n');
 @Field Logger logger = Logger.getLogger('UpdateOffsetForConsumerGroup.log')
@@ -36,7 +41,9 @@ cli.pt(longOpt: 'poll-timeout', args: 1, argName: 'poll-timeout', defaultValue: 
         'Poll timeout, in milliseconds')
 
 def options = cli.parse(args)
-if (!options || !(options.c || (options.b && options.g))) {
+if (!options) {
+    System.exit(1)
+} else if (!(options.c || (options.b && options.g))) {
     cli.usage()
     System.exit(1)
 }

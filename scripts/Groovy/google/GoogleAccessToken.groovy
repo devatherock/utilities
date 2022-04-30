@@ -1,6 +1,7 @@
 @GrabResolver(name='google', root='https://maven.google.com/')
 @Grab(group='com.google.api-client', module='google-api-client', version='1.30.8')
 
+import groovy.cli.commons.CliBuilder
 import com.google.api.client.googleapis.auth.oauth2.GoogleCredential
 
 def cli = new CliBuilder(usage: 'groovy GoogleAccessToken.groovy [options]')

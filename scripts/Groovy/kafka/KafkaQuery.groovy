@@ -1,6 +1,6 @@
 @GrabResolver(root = 'http://packages.confluent.io/maven/', name = 'Confluent')
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.11')
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
 @Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
@@ -41,7 +41,10 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import java.util.regex.Pattern
 
-LoggerFactory.getLogger('root').setLevel(Level.INFO)
+if (LoggerFactory.getLogger('root') instanceof ch.qos.logback.classic.Logger) {
+    LoggerFactory.getLogger('root').setLevel(Level.INFO)
+}
+
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Pattern PTRN_EPOCH_TIME = Pattern.compile('[0-9]{1,}')
@@ -71,7 +74,9 @@ cli._(longOpt: 'avro', args: 0, argName: 'avro', 'Flag to indicate that the mess
 cli._(longOpt: 'debug', args: 0, argName: 'debug', 'Enables debug logs')
 
 def options = cli.parse(args)
-if (!options || !(options.c || options.b)) {
+if (!options) {
+    System.exit(1)
+} else if (!(options.c || options.b)) {
     cli.usage()
     System.exit(1)
 }

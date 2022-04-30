@@ -1,5 +1,9 @@
 # Changelog
 
+## 2022-04-29
+### Added
+- Groovy 4 compatibility
+
 ## 2022-03-18
 ### Added
 - feat(KafkaQuery): Ability to start querying from a certain offset

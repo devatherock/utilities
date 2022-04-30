@@ -1,5 +1,6 @@
 @Grab(group = 'org.apache.commons', module = 'commons-text', version = '1.9')
 
+import groovy.cli.commons.CliBuilder
 import org.apache.commons.text.StringEscapeUtils
 
 def cli = new CliBuilder(usage: 'groovy JsonUnescape.groovy [options]')

@@ -4,6 +4,7 @@
 
 import groovy.json.JsonOutput
 import groovy.transform.Field
+import groovy.cli.commons.CliBuilder
 
 import org.kohsuke.github.*
 import org.springframework.web.reactive.function.client.WebClient

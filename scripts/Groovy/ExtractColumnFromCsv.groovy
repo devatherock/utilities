@@ -5,6 +5,7 @@ import org.supercsv.prefs.CsvPreference
 
 import java.util.logging.Logger
 import groovy.transform.Field
+import groovy.cli.commons.CliBuilder
 
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
