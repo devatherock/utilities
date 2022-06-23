@@ -1,5 +1,9 @@
 # Changelog
 
+## 2022-06-23
+### Added
+- EnableBranchProtection: Ability to specify required review count
+
 ## 2022-04-29
 ### Added
 - Groovy 4 compatibility
