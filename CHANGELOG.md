@@ -1,5 +1,9 @@
 # Changelog
 
+## 2022-08-06
+### Added
+- Script to convert `FundsIndia` capital gains statement to `ClearTax` format
+
 ## 2022-06-23
 ### Added
 - EnableBranchProtection: Ability to specify required review count
