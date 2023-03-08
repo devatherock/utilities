@@ -212,7 +212,7 @@ if (endOffsetsMap) {
                                     }
                                 } else {
                                     try {
-                                        if (propertyValues.contains(JsonPath.read(recordValue, propertyJsonPath))) {
+                                        if (propertyValues.contains(JsonPath.read(recordValue, propertyJsonPath).toString())) {
                                             writeOutput(record)
                                         }
                                     } catch (PathNotFoundException exception) {

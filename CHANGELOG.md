@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-03-08
+### Fixed
+- KafkaQuery - Corrected JSON value matching when the field value is not a String
+
 ## 2022-08-06
 ### Added
 - Script to convert `FundsIndia` capital gains statement to `ClearTax` format
