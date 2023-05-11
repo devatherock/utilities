@@ -3,6 +3,8 @@
 ## 2023-05-10
 ### Changed
 - Used `1.4.7` version of `logback-classic` to get Slf4j logs working in Groovy 4.x. Refer [this issue](https://issues.apache.org/jira/browse/GROOVY-11049) for more info
+- Upgraded gradle to 7.6.1
+- Upgraded spotless to 6.18.0
 
 ## 2023-03-08
 ### Fixed

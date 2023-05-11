@@ -1,4 +1,4 @@
-@GrabResolver(root = 'http://packages.confluent.io/maven/', name = 'Confluent')
+@GrabResolver(root = 'https://packages.confluent.io/maven/', name = 'Confluent')
 @GrabConfig(systemClassLoader = true)
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
