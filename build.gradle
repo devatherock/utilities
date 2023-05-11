@@ -1,20 +1,20 @@
 plugins {
     id 'groovy'
-    id 'com.diffplug.spotless' version '5.15.0'
+    id 'com.diffplug.spotless' version '6.18.0'
 }
 
 repositories {
     mavenCentral()
+    maven { url 'https://packages.confluent.io/maven/' }
 }
 
 dependencies {
-    String groovyVersion = '3.0.12'
+    String groovyVersion = '4.0.12'
     String springKafkaVersion = '2.5.15.RELEASE'
-    String spockVersion = '2.1-groovy-3.0'
+    String spockVersion = '2.3-groovy-4.0'
 
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy', version: groovyVersion
-    testImplementation group: 'org.codehaus.groovy', name: 'groovy-cli-commons', version: groovyVersion
-    testImplementation group: 'org.apache.ivy', name: 'ivy', version: '2.5.0' // For @Grab
+    testImplementation group: 'org.apache.groovy', name: 'groovy', version: groovyVersion
+    testImplementation group: 'org.apache.groovy', name: 'groovy-cli-commons', version: groovyVersion
     testImplementation group: 'commons-cli', name: 'commons-cli', version: '1.4'
 
     testImplementation group: 'org.spockframework', name: 'spock-core', version: spockVersion
@@ -24,10 +24,17 @@ dependencies {
     testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: '2.3.9.RELEASE'
     testImplementation group: 'org.springframework.kafka', name: 'spring-kafka', version: springKafkaVersion
     testImplementation group: 'org.springframework.kafka', name: 'spring-kafka-test', version: springKafkaVersion
+
+    // Disabled @Grab in tests due to @GrabConfig(systemClassLoader = true) causing errors, hence needed to declare the
+    // dependencies here
+    testImplementation group: 'net.sf.supercsv', name: 'super-csv', version: '2.4.0'
+    testImplementation group: 'io.micrometer', name: 'micrometer-registry-jmx', version: '1.5.7'
+    testImplementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '5.2.2'
 }
 
 test {
     useJUnitPlatform()
+    systemProperty 'groovy.grape.enable', 'false'
     testLogging {
         showStandardStreams = Boolean.getBoolean('all.logs')
         events 'passed', 'skipped', 'failed'
