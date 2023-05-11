@@ -1,5 +1,6 @@
+@GrabConfig(systemClassLoader = true)
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.5.0')
-@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.2.3')
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
 
 import groovy.transform.Field
 import groovy.cli.commons.CliBuilder
