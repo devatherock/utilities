@@ -1,3 +1,5 @@
+@GrabConfig(systemClassLoader = true)
+@Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
 @Grab(group = 'org.springframework', module = 'spring-webflux', version = '5.3.2')
 @Grab(group = 'io.projectreactor.netty', module = 'reactor-netty', version = '0.9.15.RELEASE')
 
@@ -7,8 +9,14 @@ import groovy.cli.commons.CliBuilder
 
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.ClientResponse
+import org.slf4j.LoggerFactory
+import ch.qos.logback.classic.Level
 
 import java.util.logging.Logger
+
+if (LoggerFactory.getLogger('root') instanceof ch.qos.logback.classic.Logger) {
+    LoggerFactory.getLogger('root').setLevel(Level.INFO)
+}
 
 System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')

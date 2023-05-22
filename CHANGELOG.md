@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-05-22
+### Changed
+- EnableBranchProtection: Used `1.4.7` version of `logback-classic`
+
 ## 2023-05-10
 ### Changed
 - Used `1.4.7` version of `logback-classic` to get Slf4j logs working in Groovy 4.x. Refer [this issue](https://issues.apache.org/jira/browse/GROOVY-11049) for more info
