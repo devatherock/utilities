@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-06-16
+### Added
+- Script to trim trailing spaces
+
 ## 2023-05-22
 ### Changed
 - EnableBranchProtection: Used `1.4.7` version of `logback-classic`
