@@ -3,7 +3,7 @@
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.3.1')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
 @Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.2.2')
-@Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.4.0')
+@Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.8.0')
 @Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
 
 import io.micrometer.core.instrument.Clock
