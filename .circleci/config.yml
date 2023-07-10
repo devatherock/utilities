@@ -1,6 +1,6 @@
 slack_image: &slack_image
   docker:
-    - image: devatherock/simple-slack:0.7.0
+    - image: devatherock/simple-slack:1.0.0
       auth:
         username: $DOCKER_USERNAME
         password: $DOCKER_PASSWORD
@@ -14,7 +14,7 @@ resource_class: &resource_class
 executors:
   jdk-executor:
     docker:
-      - image: cimg/openjdk:11.0
+      - image: cimg/openjdk:17.0
         auth:
           username: $DOCKER_USERNAME
           password: $DOCKER_PASSWORD
@@ -36,7 +36,7 @@ jobs:
       - run: |
           ./gradlew check
       - store_artifacts:
-          path: build/reports/jacoco
+          path: build/reports
       - store_test_results:
           path: build/test-results
       - save_cache:
