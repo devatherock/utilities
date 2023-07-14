@@ -66,3 +66,45 @@ groovy Deduplicater.groovy -i /path/to/input/file -o /path/to/output/file
 ```
 groovy ExtractColumnFromCsv.groovy -i /path/to/input/file -o /path/to/output/file -c <1-based column number>
 ```
+
+### BackupCreator.groovy
+Backs up specific files/folders within a source folder into a target folder. Files/folders to be backed up need to be specified in a config file
+
+**Sample:**
+
+```
+groovy BackupCreator.groovy -s /path/to/source -t /path/to/target -c backup-config.yml
+```
+
+**Parameters:**
+
+```
+ -c,--config <config>             File containing the config to use for the backup
+ -l,--log-level <log-level>       Log level to use. Defaults to INFO
+ -s,--source-path <source-path>   Path from which to backup the files
+ -t,--target-path <target-path>   Path to which to backup the files
+```
+
+**Config file sample:**
+
+```yaml
+inclusions:
+  - .gradle/gradle.properties
+  - .circleci/cli.yml
+  - .docker/config.json
+  - .jenkins/init.groovy.d
+  - .jenkins/secrets
+  - .kube/config
+  - .minikube/ca.crt
+  - .minikube/certs
+  - .minikube/config
+  - .minikube/machines
+  - .minikube/profiles
+  - .ssh
+  - .gitconfig
+  - .bashrc
+  - .bash_history
+  - .dbshell
+  - .netrc
+  - .zshrc
+```

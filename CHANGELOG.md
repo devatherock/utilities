@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-07-13
+### Added
+- Script to backup files/folders
+
 ## 2023-06-16
 ### Added
 - Script to trim trailing spaces
