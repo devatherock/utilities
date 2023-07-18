@@ -21,4 +21,13 @@ services:
       ALLOW_PLAINTEXT_LISTENER: 'yes'
       KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: 'true'
       KAFKA_CFG_INTER_BROKER_LISTENER_NAME: INTERNAL
-          
+
+  schema_registry:
+    image: confluentinc/cp-schema-registry:5.5.15-1-ubi8
+    depends_on:
+      - kafka
+    ports:
+      - 8081:8081
+    environment:
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9093
+      SCHEMA_REGISTRY_HOST_NAME: localhost

@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-07-18
+### Added
+- Tests for avro kafka producer and consumer
+
 ## 2023-07-13
 ### Added
 - Script to backup files/folders
