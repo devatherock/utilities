@@ -1,10 +1,10 @@
 @GrabResolver(root = 'https://packages.confluent.io/maven/', name = 'Confluent')
 @GrabConfig(systemClassLoader = true)
-@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '2.8.2')
-@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '5.5.15')
+@Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '3.4.1')
+@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '7.4.0')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.8.0')
-@Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.7')
+@Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.17')
 
 import groovy.transform.Field
 
