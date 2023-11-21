@@ -40,6 +40,22 @@ groovy github/CloseIssues.groovy -t <GIT_TOKEN> -n <username> -o <org> -r <repo-
 groovy github/CloseIssues.groovy -t <GIT_TOKEN> -n <username> -r <repo-name> -l <label>
 ```
 
+### CreateTag.groovy
+Creates a git tag with commit comments as message and pushes to remote. Needs to be executed with the git repo as the working directory
+
+**Sample:**
+
+```shell
+groovy /absolute/path/to/utilities/scripts/Groovy/github/CreateTag.groovy
+```
+
+**Parameters:**
+
+```
+    --help           Displays script usage instructions
+ -nd,--not-dry-run   Flag to test changes without committing to git
+```
+
 ## Other scripts
 ### Base64.groovy
 - To encode a string

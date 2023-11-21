@@ -1,5 +1,9 @@
 # Changelog
 
+## 2023-11-20
+### Added
+- Script to create a git tag
+
 ## 2023-07-19
 ### Changed
 - Upgraded `kafka-avro-serializer` to `7.4.0`
