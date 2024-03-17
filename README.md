@@ -78,9 +78,55 @@ groovy Base64.groovy -D -i aGVsbG8=
 groovy Deduplicater.groovy -i /path/to/input/file -o /path/to/output/file
 ```
 
-### ExtractColumnFromCsv.groovy
+### CsvQuery.groovy
+Queries a CSV file and outputs the results to console or to a file
+
+**Sample:**
+
 ```
-groovy ExtractColumnFromCsv.groovy -i /path/to/input/file -o /path/to/output/file -c <1-based column number>
+groovy CsvQuery.groovy -i /path/to/input.csv -q /path/to/query.yml -o /path/to/output.csv
+```
+
+**Parameters:**
+
+```
+ -i,--input <input>     Input CSV file
+ -o,--output <output>   Output CSV file
+ -q,--query <query>     Yaml file containing the query
+```
+
+**query.yml sample:**
+
+```yaml
+select:
+  - full_name
+  - age
+  - country
+reductions:
+  - distinct
+where:
+  operator: and
+  filters:
+    - operator: or
+      filters:
+        - field: first_name
+          condition: in
+          values:
+            - John
+            - Jack
+        - field: last_name
+          condition: in
+          values:
+            - Smith
+    - field: last_name
+      condition: nin
+      values:
+        - Snow
+    - field: country
+      condition: in
+      values:
+        - Mexico
+        - Canada
 ```
 
 ### BackupCreator.groovy

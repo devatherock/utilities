@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-03-17
+### Added
+- Script to query a CSV file
+
 ## 2023-11-20
 ### Added
 - Script to create a git tag
