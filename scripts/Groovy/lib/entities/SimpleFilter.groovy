@@ -2,6 +2,6 @@ package lib.entities
 
 class SimpleFilter {
     String field
-    String condition
+    Condition condition = Condition.IN
     List<Object> values
 }
