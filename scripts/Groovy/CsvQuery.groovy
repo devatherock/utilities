@@ -7,6 +7,7 @@ import org.supercsv.prefs.CsvPreference
 import lib.entities.Query
 import lib.util.QueryUtil
 
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
 import groovy.transform.Field
 import groovy.cli.commons.CliBuilder
@@ -15,7 +16,7 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Logger LOGGER = Logger.getLogger('CsvQuery.log')
 
-LOGGER.info('Script started')
+long startTime = System.currentTimeMillis()
 def cli = new CliBuilder(usage: 'groovy CsvQuery.groovy [options]')
 cli.i(longOpt: 'input', args: 1, argName: 'input', required: true, 'Input CSV file')
 cli.o(longOpt: 'output', args: 1, argName: 'output', 'Output CSV file')
@@ -31,6 +32,7 @@ CsvMapWriter csvWriter
 
 Query query = QueryUtil.parseQuery(new File(options.q).text)
 Writer writer = options.o ? new FileWriter(options.o) : new StringWriter()
+AtomicInteger recordCount = new AtomicInteger(0)
 
 try {
     csvReader = new CsvListReader(new FileReader(options.i), CsvPreference.STANDARD_PREFERENCE)
@@ -53,6 +55,8 @@ try {
         LOGGER.fine({ "Filtered data: ${filteredData}".toString() })
 
         if (filteredData) {
+            recordCount.incrementAndGet()
+
             if (headerNotWritten) {
                 outputHeaders = filteredData.keySet().toArray(new String[1])
                 csvWriter.writeHeader(outputHeaders)
@@ -70,7 +74,7 @@ finally {
     csvReader.close()
     csvWriter.close()
 }
-LOGGER.info('Query executed')
+LOGGER.info("Results: ${recordCount}, Time taken: ${(System.currentTimeMillis() - startTime)/1000} seconds")
 
 if (writer instanceof StringWriter) {
     LOGGER.info("Output: \n${writer}")

@@ -123,10 +123,9 @@ where:
       values:
         - Snow
     - field: country
-      condition: in
+      condition: like
       values:
-        - Mexico
-        - Canada
+        - ^Canada$|^Mexico$
 ```
 
 ### BackupCreator.groovy

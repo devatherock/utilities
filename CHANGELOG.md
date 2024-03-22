@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-03-22
+### Added
+- Filtering by `like` condition to `CsvQuery`
+
 ## 2024-03-20
 ### Added
 - Filtering to `CsvQuery`

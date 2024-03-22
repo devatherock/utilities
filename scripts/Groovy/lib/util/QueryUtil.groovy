@@ -19,10 +19,14 @@ class QueryUtil {
         def output = null
 
         if (!query.where || filter(query.where, rowData)) {
-            output = [:]
+            if (query.select) {
+                output = [:]
 
-            query.select.each { column ->
-                output[column] = rowData[column]
+                query.select.each { column ->
+                    output[column] = rowData[column]
+                }
+            } else {
+                output = rowData
             }
         }
 
@@ -69,8 +73,10 @@ class QueryUtil {
         } else {
             if (filter.condition == Condition.NIN) {
                 isSelected = !filter.values.contains(rowData[filter.field.toLowerCase()])
-            } else {
+            } else if (filter.condition == Condition.IN) {
                 isSelected = filter.values.contains(rowData[filter.field.toLowerCase()])
+            } else if (filter.condition == Condition.LIKE) {
+                isSelected = filter.values.any { rowData[filter.field.toLowerCase()] =~ it}
             }
         }
 
