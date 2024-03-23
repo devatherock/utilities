@@ -90,9 +90,10 @@ groovy CsvQuery.groovy -i /path/to/input.csv -q /path/to/query.yml -o /path/to/o
 **Parameters:**
 
 ```
- -i,--input <input>     Input CSV file
- -o,--output <output>   Output CSV file
- -q,--query <query>     Yaml file containing the query
+ -i,--input <input>       Input CSV file
+ -o,--output <output>     Output CSV file
+ -q,--query <query>       Yaml file containing the query
+ -t,--threads <threads>   Number of threads to use for processing
 ```
 
 **query.yml sample:**

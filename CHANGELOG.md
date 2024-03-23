@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-03-23
+### Changed
+- `CsvQuery` to improve speed through asynchronous processing
+
 ## 2024-03-22
 ### Added
 - Filtering by `like` condition to `CsvQuery`
