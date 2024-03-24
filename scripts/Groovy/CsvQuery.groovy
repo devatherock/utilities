@@ -23,10 +23,10 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
 
 long startTime = System.currentTimeMillis()
 def cli = new CliBuilder(usage: 'groovy CsvQuery.groovy [options]')
-cli.i(longOpt: 'input', args: 1, argName: 'input', required: true, 'Input CSV file')
+cli.i(longOpt: 'input', args: 1, argName: 'input', 'Input CSV file')
 cli.o(longOpt: 'output', args: 1, argName: 'output', 'Output CSV file')
 cli.q(longOpt: 'query', args: 1, argName: 'query', required: true, 'Yaml file containing the query')
-cli.t(longOpt: 'threads', args: 1, argName: 'threads', defaultValue: '5', 'Number of threads to use for processing')
+cli.t(longOpt: 'threads', args: 1, argName: 'threads', defaultValue: '3', 'Number of threads to use for processing')
 
 def options = cli.parse(args)
 if (!options) {
@@ -37,6 +37,9 @@ CsvListReader csvReader
 CsvMapWriter csvWriter
 
 Query query = QueryUtil.parseQuery(new File(options.q).text)
+String inputFile = options.i ?: query.from
+assert inputFile : 'Input file name not specified'
+
 Writer writer = options.o ? new FileWriter(options.o) : new StringWriter()
 AtomicInteger recordCount = new AtomicInteger(0)
 
@@ -45,7 +48,7 @@ ThreadPoolExecutor executor = new ThreadPoolExecutor(1, threads, 0L, TimeUnit.MI
         new LinkedBlockingQueue<>(threads * 5), new ThreadPoolExecutor.CallerRunsPolicy())
 
 try {
-    csvReader = new CsvListReader(new FileReader(options.i), CsvPreference.STANDARD_PREFERENCE)
+    csvReader = new CsvListReader(new FileReader(inputFile), CsvPreference.STANDARD_PREFERENCE)
     csvWriter = new CsvMapWriter(writer, CsvPreference.STANDARD_PREFERENCE)
     AsyncCsvWriter asyncWriter = new AsyncCsvWriter(csvWriter)
     String[] outputHeaders
