@@ -1,5 +1,12 @@
 # Changelog
 
+## 2024-03-24
+### Added
+- `from` clause to the query in `CsvQuery`
+
+### Changed
+- Upgraded `kafka-avro-serializer` to `7.6.0`
+
 ## 2024-03-23
 ### Changed
 - `CsvQuery` to improve speed through asynchronous processing
