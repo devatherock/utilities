@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-03-27
+### Added
+- Script to find lines that are different between 2 files
+
 ## 2024-03-24
 ### Added
 - `from` clause to the query in `CsvQuery`

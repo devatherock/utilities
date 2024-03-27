@@ -9,7 +9,7 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Logger LOGGER = Logger.getLogger('TrailingSpaceRemover.log')
 
-def cli = new CliBuilder(usage: 'groovy TrailingSpaceRemover.groovy [options]')
+def cli = new CliBuilder(usage: 'groovy file/TrailingSpaceRemover.groovy [options]')
 cli.i(longOpt: 'input', args: 1, argName: 'input', 'Input file', required: true)
 cli.o(longOpt: 'output', args: 1, argName: 'output', 'Output file')
 
