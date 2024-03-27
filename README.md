@@ -75,7 +75,7 @@ groovy Base64.groovy -D -i aGVsbG8=
 
 ### Deduplicater.groovy
 ```
-groovy Deduplicater.groovy -i /path/to/input/file -o /path/to/output/file
+groovy file/Deduplicater.groovy -i /path/to/input/file -o /path/to/output/file
 ```
 
 ### CsvQuery.groovy
