@@ -7,5 +7,7 @@ class Query {
     List<String> select
     String from
     List<Reduction> reductions
+    List<Transformation> transformations
+    List transformers = []
     CompoundFilter where
 }

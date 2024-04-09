@@ -10,6 +10,7 @@ import lib.util.AsyncCsvWriter
 
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.logging.Logger
+import java.util.logging.Level
 import java.util.concurrent.LinkedBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
@@ -53,7 +54,7 @@ try {
     AsyncCsvWriter asyncWriter = new AsyncCsvWriter(csvWriter)
     String[] outputHeaders
 
-    List inputHeaders = csvReader.getHeader(true).collect { it.toLowerCase() }
+    List inputHeaders = csvReader.getHeader(true).collect { it.toLowerCase().trim() }
     List rowData = csvReader.read()
 
     while (rowData != null) {
@@ -61,17 +62,21 @@ try {
         def localData = new ArrayList(rowData)
 
         executor.submit {
-            def rowMap = [:]
-            localData.eachWithIndex { def entry, int index ->
-                rowMap[inputHeaders[index]] = entry
-            }
+            try {
+                def rowMap = [:]
+                localData.eachWithIndex { def entry, int index ->
+                    rowMap[inputHeaders[index]] = entry
+                }
 
-            Map filteredData = QueryUtil.execute(query, rowMap)
-            LOGGER.fine({ "Filtered data: ${filteredData}".toString() })
+                Map filteredData = QueryUtil.execute(query, rowMap)
+                LOGGER.fine({ "Filtered data: ${filteredData}".toString() })
 
-            if (filteredData) {
-                recordCount.incrementAndGet()
-                asyncWriter.write(filteredData)
+                if (filteredData) {
+                    recordCount.incrementAndGet()
+                    asyncWriter.write(filteredData)
+                }
+            } catch (Exception exception) {
+                LOGGER.log(Level.SEVERE, exception.message, exception)
             }
         }
 
