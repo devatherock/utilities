@@ -54,9 +54,15 @@ try {
     AsyncCsvWriter asyncWriter = new AsyncCsvWriter(csvWriter)
     String[] outputHeaders
 
-    List inputHeaders = csvReader.getHeader(true).collect { it.toLowerCase().trim() }
-    List rowData = csvReader.read()
+    List inputHeadersOriginal = csvReader.getHeader(true) as List
+    List inputHeaders = inputHeadersOriginal.collect { it.toLowerCase().trim() }
+    if (!query.columns) {
+        inputHeaders.eachWithIndex { header, index ->
+            query.columns[header] = inputHeadersOriginal[index]
+        }
+    }
 
+    List rowData = csvReader.read()
     while (rowData != null) {
         LOGGER.fine({ "Row data: ${rowData}".toString() })
         def localData = new ArrayList(rowData)
