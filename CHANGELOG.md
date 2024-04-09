@@ -4,6 +4,9 @@
 ### Added
 - `concat` and `convert_date` functions to `CsvQuery`
 
+### Changed
+- Retained casing of output columns in `CsvQuery`
+
 ## 2024-03-27
 ### Added
 - Script to find lines that are different between 2 files

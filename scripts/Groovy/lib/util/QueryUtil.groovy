@@ -22,16 +22,16 @@ class QueryUtil {
         def output = null
 
         if (!query.where || filter(query.where, rowData)) {
-            if (query.select) {
+            if (query.columns) {
                 output = [:]
 
-                query.select.each { column ->
-                    output[column] = rowData[column]
+                query.columns.each { column, outputColumn ->
+                    output[outputColumn] = rowData[column]
 
                     if (query.transformations) {
                         query.transformations.eachWithIndex { transform, index ->
                             if (transform.fields.contains(column)) {
-                                output[column] = query.transformers[index].transform(output[column])
+                                output[outputColumn] = query.transformers[index].transform(output[outputColumn])
                             }
                         }
                     }
@@ -49,8 +49,11 @@ class QueryUtil {
                 enumCaseSensitive: false
         )).loadAs(query, Query)
 
+        parsedQuery.columns.clear()
         if (parsedQuery.select) {
-            parsedQuery.select = parsedQuery.select.collect { it.toLowerCase() }
+            parsedQuery.select.each { column ->
+                parsedQuery.columns[(column.toLowerCase())] = column
+            }
         }
 
         if (parsedQuery.transformations) {
