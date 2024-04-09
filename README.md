@@ -101,10 +101,23 @@ groovy CsvQuery.groovy -i /path/to/input.csv -q /path/to/query.yml -o /path/to/o
 ```yaml
 select:
   - full_name
+  - birthday
   - age
   - country
 reductions:
   - distinct
+transformations:
+  - name: concat
+    fields:
+      - full_name
+    parameters:
+      right: ';'
+  - name: convert_date
+    fields:
+      - birthday
+    parameters:
+      input_format: MM/dd/yyyy
+      output_format: yyyy-MM-dd
 where:
   operator: and
   filters:

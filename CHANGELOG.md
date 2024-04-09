@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-04-08
+### Added
+- `concat` and `convert_date` functions to `CsvQuery`
+
 ## 2024-03-27
 ### Added
 - Script to find lines that are different between 2 files
