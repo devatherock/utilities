@@ -79,6 +79,8 @@ class QueryUtil {
                     transformer.right = transform.parameters['right']
 
                     parsedQuery.transformers.add(transformer)
+                }  else if (transform.name == 'upper') {
+                    parsedQuery.transformers.add(Upper.DEFAULT)
                 }
             }
         }
