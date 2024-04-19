@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-04-19
+### Added
+- `upper` function to `CsvQuery`
+
 ## 2024-04-08
 ### Added
 - `concat` and `convert_date` functions to `CsvQuery`
