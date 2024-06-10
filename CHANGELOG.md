@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-06-10
+### Added
+- Configurable column separator to `CsvQuery`
+
 ## 2024-04-19
 ### Added
 - `upper` function to `CsvQuery`
