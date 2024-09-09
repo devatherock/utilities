@@ -13,6 +13,7 @@ import org.yaml.snakeyaml.LoaderOptions
 import java.util.logging.Logger
 import java.time.format.DateTimeFormatter
 import java.time.ZoneId
+import java.util.regex.Pattern
 
 class QueryUtil {
     static final Logger LOGGER = Logger.getLogger('QueryUtil.log')
@@ -79,9 +80,18 @@ class QueryUtil {
                     transformer.right = transform.parameters['right']
 
                     parsedQuery.transformers.add(transformer)
-                }  else if (transform.name == 'upper') {
+                } else if (transform.name == 'upper') {
                     parsedQuery.transformers.add(Upper.DEFAULT)
+                } else if (transform.name == 'extract') {
+                    Extract transformer = new Extract()
+                    String regex = transform.parameters['regex']
+                    Pattern pattern = Pattern.compile(regex)
+
+                    transformer.pattern = pattern
+                    parsedQuery.transformers.add(transformer)
                 }
+
+                transform.fields = transform.fields.collect { it.toLowerCase() }
             }
         }
 

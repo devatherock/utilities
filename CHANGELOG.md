@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-09-09
+### Added
+- `extract` function to `CsvQuery`
+
 ## 2024-06-10
 ### Added
 - Configurable column separator to `CsvQuery`
