@@ -14,16 +14,18 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         '%1$tY-%1$tm-%1$tdT%1$tH:%1$tM:%1$tS.%1$tL%1$tz %4$s %5$s%6$s%n')
 @Field static final Logger LOGGER = Logger.getLogger('FundsIndiaToClearTax.log')
 
-@Field static final String INPUT_NAME = 'Scheme name'
-@Field static final String INPUT_ISIN = 'ISIN code'
-@Field static final String INPUT_SALE_DATE = 'Sale date'
-@Field static final String INPUT_SALE_PRICE = 'Sale value'
+@Field static final String INPUT_NAME = 'Scheme Name'
+@Field static final String INPUT_ISIN = 'ISIN'
+@Field static final String INPUT_SALE_DATE = 'Sale Date'
+@Field static final String INPUT_SALE_PRICE = 'Sale Value'
 @Field static final String INPUT_PURCHASE_DATE = 'Purchase Date'
-@Field static final String INPUT_COST_PRICE = 'Purchase cost'
-@Field static final String INPUT_UNITS = 'Number of Units'
+@Field static final String INPUT_COST_PRICE = 'Purchase Price'
+@Field static final String INPUT_UNITS = 'Units'
 @Field static final def INPUT_COLUMNS = [
-        INPUT_NAME, INPUT_ISIN, null, INPUT_SALE_DATE, INPUT_SALE_PRICE, null, INPUT_PURCHASE_DATE, INPUT_COST_PRICE,
-        null, null, null, null, null, null, null, null, INPUT_UNITS, null, null
+        INPUT_NAME, INPUT_ISIN, null, null, null, null,
+        INPUT_SALE_DATE, INPUT_UNITS, INPUT_SALE_PRICE, null, null, null,
+        INPUT_PURCHASE_DATE, null, INPUT_COST_PRICE,
+        null, null, null, null, null, null, null, null, null, null
 ] as String[]
 
 @Field static final String OUTPUT_NAME = 'name'
@@ -37,7 +39,7 @@ System.setProperty('java.util.logging.SimpleFormatter.format',
         [OUTPUT_ISIN, OUTPUT_NAME, OUTPUT_UNITS, OUTPUT_PURCHASE_DATE, OUTPUT_COST_PRICE,
          OUTPUT_SALE_DATE, OUTPUT_SALE_PRICE_PER_UNIT] as String[]
 
-@Field static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern('dd/MMM/yyyy')
+@Field static final DateTimeFormatter INPUT_FORMAT = DateTimeFormatter.ofPattern('dd-MMM-yyyy')
 @Field static final DateTimeFormatter OUTPUT_FORMAT = DateTimeFormatter.ofPattern('dd/MM/yyyy')
 
 def cli = new CliBuilder(usage: 'groovy FundsIndiaToClearTax.groovy [options]')
@@ -64,11 +66,6 @@ try {
     while (rowData != null) {
         LOGGER.fine({ rowData.toString() })
 
-        BigDecimal units = new BigDecimal(rowData[INPUT_UNITS])
-        BigDecimal salePricePerUnit = new BigDecimal(rowData[INPUT_SALE_PRICE])
-                .divide(units, 2, RoundingMode.HALF_UP)
-                .stripTrailingZeros()
-
         def outputRow = [
                 (OUTPUT_ISIN)               : rowData[INPUT_ISIN],
                 (OUTPUT_NAME)               : rowData[INPUT_NAME],
@@ -76,7 +73,7 @@ try {
                 (OUTPUT_PURCHASE_DATE)      : OUTPUT_FORMAT.format(INPUT_FORMAT.parse(rowData[INPUT_PURCHASE_DATE])),
                 (OUTPUT_COST_PRICE)         : rowData[INPUT_COST_PRICE],
                 (OUTPUT_SALE_DATE)          : OUTPUT_FORMAT.format(INPUT_FORMAT.parse(rowData[INPUT_SALE_DATE])),
-                (OUTPUT_SALE_PRICE_PER_UNIT): salePricePerUnit
+                (OUTPUT_SALE_PRICE_PER_UNIT): rowData[INPUT_SALE_PRICE]
         ]
         csvWriter.write(outputRow, OUTPUT_COLUMNS)
 

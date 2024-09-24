@@ -25,3 +25,8 @@ services:
     environment:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9093
       SCHEMA_REGISTRY_HOST_NAME: localhost
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081/config" ]
+      interval: 2s
+      timeout: 60s
+      retries: 30
