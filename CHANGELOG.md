@@ -1,5 +1,10 @@
 # Changelog
 
+## 2024-09-24
+### Changed
+- FundsIndiaToClearTax: Updated to handle the latest export format from `FundsIndia`
+- Upgraded `kafka-avro-serializer` to `7.7.1`
+
 ## 2024-09-09
 ### Added
 - `extract` function to `CsvQuery`

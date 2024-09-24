@@ -2,7 +2,7 @@
 @GrabConfig(systemClassLoader = true)
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '3.4.1')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
-@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '7.6.0')
+@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '7.7.1')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.8.0')
 @Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.17')
 
@@ -277,11 +277,13 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
 
     for (int index = 0; index < partitions.size() - 1; index++) {
         consumer = new KafkaConsumer(config)
-        consumers.add(consumer)
-        initializeConsumer(consumer, partitions[index])
+
+        if (initializeConsumer(consumer, partitions[index])) {
+            consumers.add(consumer)
+        }
     }
 
-    return consumers.findAll { !it.closed }
+    return consumers
 }
 
 /**
@@ -289,8 +291,10 @@ List<KafkaConsumer> createConsumers(String topicName, Properties config) {
  *
  * @param consumer
  * @param partitionInfo
+ * @return a flag
  */
-void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
+boolean initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
+    boolean initialized = true
     List<TopicPartition> assignment = [new TopicPartition(partitionInfo.topic(), partitionInfo.partition())]
 
     Map<TopicPartition, Long> startOffsets = [:]
@@ -344,7 +348,10 @@ void initializeConsumer(KafkaConsumer consumer, PartitionInfo partitionInfo) {
         }
     } else {
         consumer.close()
+        initialized = false
     }
+
+    return initialized
 }
 
 /**

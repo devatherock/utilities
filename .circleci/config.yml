@@ -1,15 +1,8 @@
-slack_image: &slack_image
-  docker:
-    - image: devatherock/simple-slack:1.0.0
-      auth:
-        username: $DOCKER_USERNAME
-        password: $DOCKER_PASSWORD
-        
 work_directory: &work_directory
   working_directory: ~/utilities
 
-resource_class: &resource_class
-  resource_class: small
+orbs:
+  templates: devatherock/circleci-templates@0.7.0
 
 executors:
   machine-executor:
@@ -41,33 +34,23 @@ jobs:
             - ~/.gradle
           key: v1-integration-{{ checksum "build.gradle" }}
 
-  notify:
-    <<: *slack_image
-    <<: *resource_class
-    environment:
-      TEXT: "Success: {{.CircleBuildUrl}} by {{.CircleUsername}}"
-      COLOR: "#33ad7f"
-      CHANNEL: general
-      TITLE: "Build completed"
-    steps:
-      - run: /bin/simpleslack
-
 workflows:
   version: 2.1
   build:
     jobs:
-      - test:
-          context:
-            - docker-credentials
-          filters:
-            branches:
-              only: master
-      - notify:
+      - templates/slack:
+          name: notify
           context:
             - docker-credentials
             - slack-webhook
+          filters:
+            branches:
+              only: master
+      - test:
+          context:
+            - docker-credentials
           requires:
-            - test
+            - notify
 
   pr_check:
     jobs:

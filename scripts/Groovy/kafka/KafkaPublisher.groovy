@@ -1,7 +1,7 @@
 @GrabResolver(root = 'https://packages.confluent.io/maven/', name = 'Confluent')
 @GrabConfig(systemClassLoader = true)
 @Grab(group = 'org.apache.kafka', module = 'kafka-clients', version = '3.4.1')
-@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '7.6.0')
+@Grab(group = 'io.confluent', module = 'kafka-avro-serializer', version = '7.7.1')
 @Grab(group = 'ch.qos.logback', module = 'logback-classic', version = '1.4.7')
 @Grab(group = 'com.jayway.jsonpath', module = 'json-path', version = '2.8.0')
 @Grab(group = 'io.micrometer', module = 'micrometer-registry-jmx', version = '1.5.17')
