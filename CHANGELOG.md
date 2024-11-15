@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-11-14
+### Added
+- Temporary script to test performance of `docker pull` vs `docker load`
+
 ## 2024-09-24
 ### Changed
 - FundsIndiaToClearTax: Updated to handle the latest export format from `FundsIndia`
