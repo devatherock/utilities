@@ -24,7 +24,7 @@ dependencies {
     // dependencies here
     testImplementation group: 'net.sf.supercsv', name: 'super-csv', version: '2.4.0'
     testImplementation group: 'io.micrometer', name: 'micrometer-registry-jmx', version: '1.5.17'
-    testImplementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '7.7.1'
+    testImplementation group: 'io.confluent', name: 'kafka-avro-serializer', version: '7.7.2'
     testImplementation group: 'ch.qos.logback', name: 'logback-classic', version: '1.4.14'
     testImplementation group: 'com.jayway.jsonpath', name: 'json-path', version: '2.8.0'
 }

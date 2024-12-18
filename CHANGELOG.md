@@ -1,5 +1,9 @@
 # Changelog
 
+## 2024-12-18
+### Changed
+- [#53](https://github.com/devatherock/utilities/issues/53): Upgraded `kafka-avro-serializer` to `7.7.2`
+
 ## 2024-11-14
 ### Added
 - Temporary script to test performance of `docker pull` vs `docker load`
